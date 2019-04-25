@@ -7,37 +7,66 @@ module App
 
 open Elmish
 open Elmish.React
+open Fable.Core.JsInterop
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
+open Fable.MaterialUI
+open Fable.MaterialUI.Core
 
-// MODEL
-
-type Model = int
+type Page =
+    | Home
+    | Counter
+    static member All = [ Home; Counter ]
+    
+// Set up page model and message
+type Model =
+    {
+        Page: Page
+        Counter: Counter.Model
+    }
 
 type Msg =
-| Increment
-| Decrement
+    | Navigate of Page
+    | CounterMsg of Counter.Msg
 
-let init() : Model = 0
-
-// UPDATE
+// create initialise and update methods
+let init () =
+  let m =
+    { Page = Home
+      Counter = Counter.init() }
+  m, Cmd.none
 
 let update (msg:Msg) (model:Model) =
     match msg with
-    | Increment -> model + 1
-    | Decrement -> model - 1
+    | Navigate p -> { model with Page = p }, Cmd.none
+    | CounterMsg m -> { model with Counter = Counter.update m model.Counter }, Cmd.none
 
-// VIEW (rendered with React)
+let pageTitle = function
+    | Home -> "Home"
+    | Counter -> "Counter"
 
+let private pageListItem model dispatch page =
+  listItem [
+    ListItemProp.Button true
+    ListItemProp.Divider (page = Home)
+    HTMLAttr.Selected (model.Page = page)
+    Key (pageTitle page)
+    DOMAttr.OnClick (fun _ -> Navigate page |> dispatch)
+  ] [
+    listItemText [ ] [ page |> pageTitle |> str ]
+  ]
+  
+// create the react view
 let view (model:Model) dispatch =
 
-  div []
-      [ button [ OnClick (fun _ -> dispatch Increment) ] [ str "+" ]
-        div [] [ str (string model) ]
-        button [ OnClick (fun _ -> dispatch Decrement) ] [ str "-" ] ]
+  div [] [
+      list [ Component !^"nav" ] [
+        Page.All |> List.map (pageListItem model dispatch) |> ofList
+      ]
+    ]
 
 // App
-Program.mkSimple init update view
+Program.mkProgram init update view
 |> Program.withReact "elmish-app"
 |> Program.withConsoleTrace
 |> Program.run
