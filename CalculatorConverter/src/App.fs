@@ -1,10 +1,5 @@
 module App
 
-(**
- The famous Increment/Decrement ported from Elm.
- You can find more info about Elmish architecture and samples at https://elmish.github.io/
-*)
-
 open Elmish
 open Elmish.React
 open Fable.Core.JsInterop
@@ -18,7 +13,6 @@ type Page =
     | Counter
     static member All = [ Home; Counter ]
     
-// Set up page model and message
 type Model =
     {
         Page: Page
@@ -29,11 +23,13 @@ type Msg =
     | Navigate of Page
     | CounterMsg of Counter.Msg
 
-// create initialise and update methods
+
 let init () =
   let m =
-    { Page = Home
-      Counter = Counter.init() }
+    {
+      Page = Home
+      Counter = Counter.init()
+    }
   m, Cmd.none
 
 let update (msg:Msg) (model:Model) =
@@ -56,14 +52,24 @@ let private pageListItem model dispatch page =
     listItemText [ ] [ page |> pageTitle |> str ]
   ]
   
-// create the react view
+let private pageView model dispatch =
+  match model.Page with
+  | Home -> typography [] [ str "This app is a calculator and unit converter." ]
+  | Counter -> lazyView2 Counter.view model.Counter (CounterMsg >> dispatch)
+  
 let view (model:Model) dispatch =
-
   div [] [
+    div [] [
       list [ Component !^"nav" ] [
         Page.All |> List.map (pageListItem model dispatch) |> ofList
       ]
     ]
+    main [] [
+      div [] [
+         pageView model dispatch
+    ]
+  ]
+]
 
 // App
 Program.mkProgram init update view
