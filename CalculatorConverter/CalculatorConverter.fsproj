@@ -8,7 +8,8 @@
         <PackageReference Include="Fable.MaterialUI" Version="3.1.0" />
     </ItemGroup>
     <ItemGroup>
-      <Compile Include="src\Counter.fs" />
+      <Compile Include="src\Converter.fs" />
+      <Compile Include="src\Calculator.fs" />
       <Compile Include="src\App.fs" />
       <Content Include="package-lock.json" />
       <Content Include="package.json" />

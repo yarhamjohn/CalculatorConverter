@@ -1,49 +1,37 @@
-module Counter
+module Converter
 
 (**
  The famous Increment/Decrement ported from Elm.
  You can find more info about Elmish architecture and samples at https://elmish.github.io/
 *)
 
-open System
-open Elmish
-open Elmish.React
-open Fable.Core
 open Fable.Core.JsInterop
 open Fable.Import.React
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
 open Fable.MaterialUI
 open Fable.MaterialUI.Core
-open Fable.MaterialUI.Props
-
-
-// MODEL
 
 type Model = int
 
 type Msg =
-| Increment
-| Decrement
+  | Increment
+  | Decrement
 
 let init() : Model = 0
-
-// UPDATE
 
 let update (msg:Msg) (model:Model) =
     match msg with
     | Increment -> model + 1
     | Decrement -> model - 1
 
-// VIEW (rendered with React)
-
 let view' (model:Model) dispatch =
-
   div []
-      [ button [ OnClick (fun _ -> dispatch Increment) ] [ str "+" ]
+      [
+        button [ OnClick (fun _ -> dispatch Increment) ] [ str "+" ]
         div [] [ str (string model) ]
-        button [ OnClick (fun _ -> dispatch Decrement) ] [ str "-" ] ]
-
+        button [ OnClick (fun _ -> dispatch Decrement) ] [ str "-" ]
+      ]
 
 let private styles (theme: ITheme) : IStyles list =
   let drawerWidth = "240px"
@@ -78,7 +66,6 @@ type private Component(p) =
   let viewFun (p: IProps) = view' p.model p.dispatch
   let viewWithStyles = withStyles (StyleType.Func styles) [] viewFun
   override this.render() = from viewWithStyles this.props []
-
 
 let view (model: Model) (dispatch: Msg -> unit) : ReactElement =
   let props = jsOptions<IProps>(fun p ->
