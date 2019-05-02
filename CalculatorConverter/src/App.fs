@@ -92,6 +92,7 @@ let private viewDefinition (classes: IClasses) model dispatch =
       pageView model dispatch
     ]
   ]
+  
 let private styles (theme: ITheme) : IStyles list =
   let drawerWidth = "240px"
   [

@@ -12,48 +12,94 @@ open Fable.Helpers.React.Props
 open Fable.MaterialUI
 open Fable.MaterialUI.Core
 
-type Model = int
+type Model =
+  {
+    number: int
+  }
 
 type Msg =
   | Increment
   | Decrement
 
-let init() : Model = 0
+let init () =
+  let model =
+    {
+      number = 0
+    }
+  model
 
 let update (msg:Msg) (model:Model) =
     match msg with
-    | Increment -> model + 1
-    | Decrement -> model - 1
+    | Increment -> { model with number = model.number + 1 }
+    | Decrement -> { model with number = model.number - 1 }
 
-let view' (model:Model) dispatch =
-  div []
-      [
-        button [ OnClick (fun _ -> dispatch Increment) ] [ str "+" ]
-        div [] [ str (string model) ]
-        button [ OnClick (fun _ -> dispatch Decrement) ] [ str "-" ]
+let viewDefinition (classes: IClasses) model dispatch =
+  div [] [
+    div [Class classes?calculator] [
+      div [Class classes?buttonRow] [
+        button [
+          Class classes?button
+          OnClick (fun _ -> dispatch Increment)
+        ] [ str "7" ]
+        button [
+          Class classes?button
+          OnClick (fun _ -> dispatch Increment)
+        ] [ str "8" ]
+        button [
+          Class classes?button
+          OnClick (fun _ -> dispatch Increment)
+        ] [ str "9" ]
       ]
-
-let private styles (theme: ITheme) : IStyles list =
-  let drawerWidth = "240px"
-  [
-    Styles.Root [
-      Display "flex"
+      div [Class classes?buttonRow] [
+        button [
+          Class classes?button
+          OnClick (fun _ -> dispatch Increment)
+        ] [ str "4" ]
+        button [
+          Class classes?button
+          OnClick (fun _ -> dispatch Increment)
+        ] [ str "5" ]
+        button [
+          Class classes?button
+          OnClick (fun _ -> dispatch Increment)
+        ] [ str "6" ]
+      ]
+      div [Class classes?buttonRow] [
+        button [
+          Class classes?button
+          OnClick (fun _ -> dispatch Increment)
+        ] [ str "1" ]
+        button [
+          Class classes?button
+          OnClick (fun _ -> dispatch Increment)
+        ] [ str "2" ]
+        button [
+          Class classes?button
+          OnClick (fun _ -> dispatch Increment)
+        ] [ str "3" ]
+      ]
     ]
-    Styles.Custom ("appBar", [
-      CSSProp.ZIndex (theme.zIndex.drawer + 1)
+    div [] [ ofInt model.number ]
+  ]
+
+
+  
+let private styles (theme: ITheme) : IStyles list =
+  [
+    Styles.Custom ("calculator", [
+      Display "flex"
+      FlexDirection "column"
+      Height "120px"
+      JustifyContent "space-between"
     ])
-    Styles.Custom ("drawer", [
-      Width drawerWidth
-      FlexShrink 0
+    Styles.Custom ("buttonRow", [
+      Display "flex"
+      JustifyContent "space-between"
+      Width "200px"
     ])
-    Styles.Custom ("drawerPaper", [
-      Width drawerWidth
-    ])
-    Styles.Custom ("content", [
-      FlexGrow 1
-      CSSProp.Padding (theme.spacing.unit * 3)
-    ])
-    Styles.Custom' ("toolbar", theme.mixins.toolbar)
+    Styles.Button [
+      BackgroundColor "rgb(200, 200, 200)"
+    ]
   ]
   
 type private IProps =
@@ -63,7 +109,7 @@ type private IProps =
 
 type private Component(p) =
   inherit PureStatelessComponent<IProps>(p)
-  let viewFun (p: IProps) = view' p.model p.dispatch
+  let viewFun (p: IProps) = viewDefinition p.classes p.model p.dispatch
   let viewWithStyles = withStyles (StyleType.Func styles) [] viewFun
   override this.render() = from viewWithStyles this.props []
 
