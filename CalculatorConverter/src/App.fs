@@ -5,6 +5,7 @@ open Elmish.React
 open Fable.Core.JsInterop
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
+open Fable.Import.React
 open Fable.MaterialUI
 open Fable.MaterialUI.Core
 
@@ -60,20 +61,77 @@ let private pageView model dispatch =
   | Calculator -> lazyView2 Calculator.view model.Calculator (CalculatorMsg >> dispatch)
   | Converter -> lazyView2 Converter.view model.Converter (ConverterMsg >> dispatch)
   
-let view (model:Model) dispatch =
-  div [] [
-    div [] [
+let private viewDefinition (classes: IClasses) model dispatch =
+  div [
+    Class classes?root
+  ] [
+    cssBaseline []
+    appBar [
+      Class classes?appBar
+      AppBarProp.Position AppBarPosition.Fixed
+    ] [
+      toolbar [] [
+        typography [
+          TypographyProp.Variant TypographyVariant.H6
+          MaterialProp.Color ComponentColor.Inherit
+        ] [ "Calculator and Converter built with F# and Elm" |> str ]
+      ]
+    ]
+    drawer [
+      Class classes?drawer
+      DrawerProp.Variant DrawerVariant.Permanent
+      Classes [ ClassNames.Paper classes?drawerPaper ]
+    ] [
+      div [ Class classes?toolbar ] []
       list [ Component !^"nav" ] [
         Page.All |> List.map (pageListItem model dispatch) |> ofList
       ]
     ]
-    main [] [
-      div [] [
-         pageView model dispatch
+    main [ Class classes?content ] [
+      div [ Class classes?toolbar ] []
+      pageView model dispatch
     ]
   ]
-]
+let private styles (theme: ITheme) : IStyles list =
+  let drawerWidth = "240px"
+  [
+    Styles.Root [
+      Display "flex"
+    ]
+    Styles.Custom ("appBar", [
+      CSSProp.ZIndex (theme.zIndex.drawer + 1)
+    ])
+    Styles.Custom ("drawer", [
+      Width drawerWidth
+      FlexShrink 0
+    ])
+    Styles.Custom ("drawerPaper", [
+      Width drawerWidth
+    ])
+    Styles.Custom ("content", [
+      FlexGrow 1
+      CSSProp.Padding (theme.spacing.unit * 3)
+    ])
+    Styles.Custom' ("toolbar", theme.mixins.toolbar)
+  ]
+  
+type private IProps =
+  abstract member model: Model with get, set
+  abstract member dispatch: (Msg -> unit) with get, set
+  inherit IClassesProps
 
+type private Component(p) =
+  inherit PureStatelessComponent<IProps>(p)
+  let viewFun (p: IProps) = viewDefinition p.classes p.model p.dispatch
+  let viewWithStyles = withStyles (StyleType.Func styles) [] viewFun
+  override this.render() = from viewWithStyles this.props []
+
+let view (model: Model) (dispatch: Msg -> unit) : ReactElement =
+  let props = jsOptions<IProps>(fun p ->
+    p.model <- model
+    p.dispatch <- dispatch)
+  ofType<Component,_,_> props []
+  
 Program.mkProgram init update view
 |> Program.withReact "elmish-app"
 |> Program.withConsoleTrace
