@@ -11,7 +11,7 @@ open Fable.Helpers.React
 open Fable.Helpers.React.Props
 open Fable.MaterialUI
 open Fable.MaterialUI.Core
-open Fable.MaterialUI.Themes
+open Fable.Core
 
 type Model =
   {
@@ -162,6 +162,9 @@ let private styles (theme: ITheme) : IStyles list =
     ])
     Styles.Custom ("equalsButton", [
       BackgroundColor "rgb(90, 190, 60, 0.75)"
+      CSSProp.Custom ("&:hover", [
+        CSSProp.BackgroundColor "rgb(90, 190, 60, 0.5)"
+      ] |> keyValueList CaseRules.LowerFirst)
     ])
   ]
   
