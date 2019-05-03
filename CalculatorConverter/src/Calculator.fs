@@ -30,22 +30,17 @@ let init () =
     }
   model
 
+let private formatInput (input: string) (digit: string) =
+  if input.TrimStart('0').Length = 0 then digit else input + digit
+
+let private canAppendDecimalPoint (input: string) = not (input.Contains(".")) || input.Length = 0
+
 let update (msg:Msg) (model:Model) =
     match msg with
-    | AppendDigit c -> { model with input = model.input + c}
-    | AppendDecimalPoint -> { model with input = if model.input.Contains(".") then model.input else model.input + "." }
-    | DeleteDigit -> { model with input = model.input.Substring(0, model.input.Length - 1) }
+    | AppendDigit digit -> { model with input = formatInput model.input digit }
+    | AppendDecimalPoint -> { model with input = if canAppendDecimalPoint model.input then model.input + "." else model.input }
+    | DeleteDigit -> { model with input = if model.input.Length = 1 then "0" else model.input.Substring(0, model.input.Length - 1) }
 
-let private formatInput (input: string) =
-  if input.Length = 0 then "0"
-  elif input.Length = 1 then
-    if input = "." then "0"
-    else input
-  elif input.Length > 1 then
-    if input.TrimStart('0').Length = 0 then "0"
-    elif input.TrimStart('0').Substring(0, 1) = "." then "0" + input.TrimStart('0')
-    else input.TrimStart('0')
-  else input
 
 let viewDefinition (classes: IClasses) model dispatch =
   div [] [
@@ -72,7 +67,7 @@ let viewDefinition (classes: IClasses) model dispatch =
       ]
     ]
     div [ Class classes?result ] [
-      span [] [ formatInput model.input |> str ]
+      span [] [ str model.input ]
     ]
   ]
 
