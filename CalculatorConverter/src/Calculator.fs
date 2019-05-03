@@ -29,6 +29,7 @@ type Msg =
   | Multiply
   | Divide
   | Equals
+  | Clear
 
 let init () =
   let model =
@@ -69,11 +70,17 @@ let update (msg:Msg) (model: Model) =
     | Multiply -> { model with stored = model.input; input = "0"; action = "*" }
     | Divide -> { model with stored = model.input; input = "0"; action = "/" }
     | Equals -> { model with input = getResult model; stored = "0"; action = "" }
+    | Clear -> { model with input = "0"; stored = "0"; action = "" }
 
 let viewDefinition (classes: IClasses) model dispatch =
   div [] [
     div [ Class classes?calculator ] [
       div [ Class classes?digits ] [
+        div [ Class classes?buttonRow ] [
+          button [ Class classes?button; OnClick (fun _ -> Clear |> dispatch) ] [ str "C" ]
+          button [ Class classes?button; ] [ str "" ]
+          button [ Class classes?button; ] [ str "" ]
+        ]
         div [ Class classes?buttonRow ] [
           button [ Class classes?button; OnClick (fun _ -> AppendDigit "7" |> dispatch) ] [ str "7" ]
           button [ Class classes?button; OnClick (fun _ -> AppendDigit "8" |> dispatch) ] [ str "8" ]
