@@ -12,7 +12,6 @@ open Fable.Helpers.React
 open Fable.Helpers.React.Props
 open Fable.MaterialUI
 open Fable.MaterialUI.Core
-open Fable.MaterialUI.Themes
 
 type Model =
   {
@@ -20,8 +19,9 @@ type Model =
   }
 
 type Msg =
-  | Combine of string
-  | Delete
+  | AppendDigit of string
+  | AppendDecimalPoint
+  | DeleteDigit
 
 let init () =
   let model =
@@ -32,70 +32,47 @@ let init () =
 
 let update (msg:Msg) (model:Model) =
     match msg with
-    | Combine c -> { model with input = model.input + c}
-    | Delete -> { model with input = model.input.Substring(0, model.input.Length - 1) }
+    | AppendDigit c -> { model with input = model.input + c}
+    | AppendDecimalPoint -> { model with input = if model.input.Contains(".") then model.input else model.input + "." }
+    | DeleteDigit -> { model with input = model.input.Substring(0, model.input.Length - 1) }
+
+let private formatInput (input: string) =
+  if input.Length = 0 then "0"
+  elif input.Length = 1 then
+    if input = "." then "0"
+    else input
+  elif input.Length > 1 then
+    if input.TrimStart('0').Length = 0 then "0"
+    elif input.TrimStart('0').Substring(0, 1) = "." then "0" + input.TrimStart('0')
+    else input.TrimStart('0')
+  else input
 
 let viewDefinition (classes: IClasses) model dispatch =
   div [] [
-    div [Class classes?calculator] [
-      div [Class classes?buttonRow] [
-        button [
-          Class classes?button
-          OnClick (fun _ -> Combine "7" |> dispatch)
-        ] [ str "7" ]
-        button [
-          Class classes?button
-          OnClick (fun _ -> Combine "8" |> dispatch)
-        ] [ str "8" ]
-        button [
-          Class classes?button
-          OnClick (fun _ -> Combine "9" |> dispatch)
-        ] [ str "9" ]
+    div [ Class classes?calculator ] [
+      div [ Class classes?buttonRow ] [
+        button [ Class classes?button; OnClick (fun _ -> AppendDigit "7" |> dispatch) ] [ str "7" ]
+        button [ Class classes?button; OnClick (fun _ -> AppendDigit "8" |> dispatch) ] [ str "8" ]
+        button [ Class classes?button; OnClick (fun _ -> AppendDigit "9" |> dispatch) ] [ str "9" ]
       ]
-      div [Class classes?buttonRow] [
-        button [
-          Class classes?button
-          OnClick (fun _ -> Combine "4" |> dispatch)
-        ] [ str "4" ]
-        button [
-          Class classes?button
-          OnClick (fun _ -> Combine "5" |> dispatch)
-        ] [ str "5" ]
-        button [
-          Class classes?button
-          OnClick (fun _ -> Combine "6" |> dispatch)
-        ] [ str "6" ]
+      div [ Class classes?buttonRow] [
+        button [ Class classes?button; OnClick (fun _ -> AppendDigit "4" |> dispatch) ] [ str "4" ]
+        button [ Class classes?button; OnClick (fun _ -> AppendDigit "5" |> dispatch) ] [ str "5" ]
+        button [ Class classes?button; OnClick (fun _ -> AppendDigit "6" |> dispatch) ] [ str "6" ]
       ]
-      div [Class classes?buttonRow] [
-        button [
-          Class classes?button
-          OnClick (fun _ -> Combine "1" |> dispatch)
-        ] [ str "1" ]
-        button [
-          Class classes?button
-          OnClick (fun _ -> Combine "2" |> dispatch)
-        ] [ str "2" ]
-        button [
-          Class classes?button
-          OnClick (fun _ -> Combine "3" |> dispatch)
-        ] [ str "3" ]
+      div [ Class classes?buttonRow] [
+        button [ Class classes?button; OnClick (fun _ -> AppendDigit "1" |> dispatch) ] [ str "1" ]
+        button [ Class classes?button; OnClick (fun _ -> AppendDigit "2" |> dispatch) ] [ str "2" ]
+        button [ Class classes?button; OnClick (fun _ -> AppendDigit "3" |> dispatch) ] [ str "3" ]
       ]
-      div [Class classes?buttonRow] [
-        button [
-          Class classes?button
-          OnClick (fun _ -> Combine "0" |> dispatch)
-        ] [ str "0" ]
-        div [Class classes?buttonSpace] []
-        button [
-          Class classes?button
-          OnClick (fun _ -> dispatch Delete)
-        ] [ str "DEL" ]
+      div [ Class classes?buttonRow] [
+        button [ Class classes?button; OnClick (fun _ -> AppendDigit "0" |> dispatch) ] [ str "0" ]
+        button [ Class classes?button; OnClick (fun _ -> dispatch AppendDecimalPoint) ] [ str "." ]
+        button [ Class classes?button; OnClick (fun _ -> dispatch DeleteDigit) ] [ str "DEL" ]
       ]
     ]
-    div [Class classes?result] [
-      span [] [
-        model.input |> Int32.Parse |> ofInt
-      ]
+    div [ Class classes?result ] [
+      span [] [ formatInput model.input |> str ]
     ]
   ]
 
