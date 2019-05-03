@@ -12,6 +12,7 @@ open Fable.Helpers.React
 open Fable.Helpers.React.Props
 open Fable.MaterialUI
 open Fable.MaterialUI.Core
+open Fable.MaterialUI.Themes
 
 type Model =
   {
@@ -84,49 +85,56 @@ let viewDefinition (classes: IClasses) model dispatch =
           Class classes?button
           OnClick (fun _ -> Combine "0" |> dispatch)
         ] [ str "0" ]
-        button [
-          Class classes?button
-        ] [  ]
+        div [Class classes?buttonSpace] []
         button [
           Class classes?button
           OnClick (fun _ -> dispatch Delete)
-        ] [ str "Del" ]
+        ] [ str "DEL" ]
       ]
     ]
-    div [Class classes?result] [ model.input |> Int32.Parse |> ofInt ]
+    div [Class classes?result] [
+      span [] [
+        model.input |> Int32.Parse |> ofInt
+      ]
+    ]
   ]
 
-
-  
 let private styles (theme: ITheme) : IStyles list =
   [
     Styles.Custom ("calculator", [
-      Display "flex"
-      FlexDirection "column"
-      Height "120px"
-      JustifyContent "space-between"
     ])
     Styles.Custom ("buttonRow", [
       Display "flex"
-      JustifyContent "space-between"
-      Width "200px"
     ])
     Styles.Button [
       BackgroundColor "rgb(200, 200, 200)"
+      MarginTop "10px"
+      MarginLeft "10px"
     ]
+    Styles.Custom ("buttonSpace", [
+      MarginTop "10px"
+      MarginLeft "10px"
+      Width "64px"
+      Height "36px"
+    ])
     Styles.Custom ("result", [
       BackgroundColor "white"
-      MarginTop "25px"
-      Border "1px solid black"
+      MarginTop "10px"
+      MarginLeft "10px"
+      Border "1px solid rgb(200, 200, 200)"
       BorderTopLeftRadius "5px"
       BorderTopRightRadius "5px"
       BorderBottomLeftRadius "5px"
       BorderBottomRightRadius "5px"
-      Width "200px"
+      Width "212px"
+      Height "36px"
       PaddingLeft "10px"
       PaddingRight "10px"
       PaddingTop "5px"
       PaddingBottom "5px"
+      Display "flex"
+      FlexDirection "column"
+      JustifyContent "space-around"
     ])
   ]
   
