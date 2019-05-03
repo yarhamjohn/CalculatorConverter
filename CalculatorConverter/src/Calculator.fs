@@ -79,7 +79,7 @@ let viewDefinition (classes: IClasses) model dispatch =
         ] [ str "3" ]
       ]
     ]
-    div [] [ ofInt model.number ]
+    div [Class classes?result] [ ofInt model.number ]
   ]
 
 
@@ -100,6 +100,20 @@ let private styles (theme: ITheme) : IStyles list =
     Styles.Button [
       BackgroundColor "rgb(200, 200, 200)"
     ]
+    Styles.Custom ("result", [
+      BackgroundColor "white"
+      MarginTop "25px"
+      Border "1px solid black"
+      BorderTopLeftRadius "5px"
+      BorderTopRightRadius "5px"
+      BorderBottomLeftRadius "5px"
+      BorderBottomRightRadius "5px"
+      Width "200px"
+      PaddingLeft "10px"
+      PaddingRight "10px"
+      PaddingTop "5px"
+      PaddingBottom "5px"
+    ])
   ]
   
 type private IProps =
