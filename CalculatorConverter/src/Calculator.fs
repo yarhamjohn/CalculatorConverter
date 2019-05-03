@@ -71,7 +71,7 @@ let viewDefinition (classes: IClasses) model dispatch =
       ]
     ]
     div [ Class classes?result ] [
-      span [] [ str model.input ]
+      span [Class classes?display] [ str model.input ]
     ]
   ]
 
@@ -111,6 +111,9 @@ let private styles (theme: ITheme) : IStyles list =
       Display "flex"
       FlexDirection "column"
       JustifyContent "space-around"
+    ])
+    Styles.Custom ("display", [
+      TextAlign "right"
     ])
   ]
   
