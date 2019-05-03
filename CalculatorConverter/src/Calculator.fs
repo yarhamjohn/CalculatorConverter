@@ -5,6 +5,7 @@ module Calculator
  You can find more info about Elmish architecture and samples at https://elmish.github.io/
 *)
 
+open System
 open Fable.Core.JsInterop
 open Fable.Import.React
 open Fable.Helpers.React
@@ -14,24 +15,24 @@ open Fable.MaterialUI.Core
 
 type Model =
   {
-    number: int
+    input: string
   }
 
 type Msg =
+  | Combine of string
   | Increment
   | Decrement
 
 let init () =
   let model =
     {
-      number = 0
+      input = "0"
     }
   model
 
 let update (msg:Msg) (model:Model) =
     match msg with
-    | Increment -> { model with number = model.number + 1 }
-    | Decrement -> { model with number = model.number - 1 }
+    | Combine c -> { model with input = model.input + c}
 
 let viewDefinition (classes: IClasses) model dispatch =
   div [] [
@@ -39,47 +40,47 @@ let viewDefinition (classes: IClasses) model dispatch =
       div [Class classes?buttonRow] [
         button [
           Class classes?button
-          OnClick (fun _ -> dispatch Increment)
+          OnClick (fun _ -> Combine "7" |> dispatch)
         ] [ str "7" ]
         button [
           Class classes?button
-          OnClick (fun _ -> dispatch Increment)
+          OnClick (fun _ -> Combine "8" |> dispatch)
         ] [ str "8" ]
         button [
           Class classes?button
-          OnClick (fun _ -> dispatch Increment)
+          OnClick (fun _ -> Combine "9" |> dispatch)
         ] [ str "9" ]
       ]
       div [Class classes?buttonRow] [
         button [
           Class classes?button
-          OnClick (fun _ -> dispatch Increment)
+          OnClick (fun _ -> Combine "4" |> dispatch)
         ] [ str "4" ]
         button [
           Class classes?button
-          OnClick (fun _ -> dispatch Increment)
+          OnClick (fun _ -> Combine "5" |> dispatch)
         ] [ str "5" ]
         button [
           Class classes?button
-          OnClick (fun _ -> dispatch Increment)
+          OnClick (fun _ -> Combine "6" |> dispatch)
         ] [ str "6" ]
       ]
       div [Class classes?buttonRow] [
         button [
           Class classes?button
-          OnClick (fun _ -> dispatch Increment)
+          OnClick (fun _ -> Combine "1" |> dispatch)
         ] [ str "1" ]
         button [
           Class classes?button
-          OnClick (fun _ -> dispatch Increment)
+          OnClick (fun _ -> Combine "2" |> dispatch)
         ] [ str "2" ]
         button [
           Class classes?button
-          OnClick (fun _ -> dispatch Increment)
+          OnClick (fun _ -> Combine "3" |> dispatch)
         ] [ str "3" ]
       ]
     ]
-    div [Class classes?result] [ ofInt model.number ]
+    div [Class classes?result] [ model.input |> Int32.Parse |> ofInt ]
   ]
 
 
