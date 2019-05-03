@@ -20,8 +20,7 @@ type Model =
 
 type Msg =
   | Combine of string
-  | Increment
-  | Decrement
+  | Delete
 
 let init () =
   let model =
@@ -33,6 +32,7 @@ let init () =
 let update (msg:Msg) (model:Model) =
     match msg with
     | Combine c -> { model with input = model.input + c}
+    | Delete -> { model with input = model.input.Substring(0, model.input.Length - 1) }
 
 let viewDefinition (classes: IClasses) model dispatch =
   div [] [
@@ -78,6 +78,19 @@ let viewDefinition (classes: IClasses) model dispatch =
           Class classes?button
           OnClick (fun _ -> Combine "3" |> dispatch)
         ] [ str "3" ]
+      ]
+      div [Class classes?buttonRow] [
+        button [
+          Class classes?button
+          OnClick (fun _ -> Combine "0" |> dispatch)
+        ] [ str "0" ]
+        button [
+          Class classes?button
+        ] [  ]
+        button [
+          Class classes?button
+          OnClick (fun _ -> dispatch Delete)
+        ] [ str "Del" ]
       ]
     ]
     div [Class classes?result] [ model.input |> Int32.Parse |> ofInt ]
