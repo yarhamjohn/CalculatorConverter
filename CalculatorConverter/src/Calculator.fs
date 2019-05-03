@@ -11,6 +11,7 @@ open Fable.Helpers.React
 open Fable.Helpers.React.Props
 open Fable.MaterialUI
 open Fable.MaterialUI.Core
+open Fable.MaterialUI.Themes
 
 type Model =
   {
@@ -103,7 +104,7 @@ let viewDefinition (classes: IClasses) model dispatch =
           button [ Class classes?button; OnClick (fun _ -> dispatch Substract) ] [ str "-" ]
           button [ Class classes?button; OnClick (fun _ -> dispatch Multiply) ] [ str "*" ]
           button [ Class classes?button; OnClick (fun _ -> dispatch Divide) ] [ str "/" ]
-          button [ Class classes?button; OnClick (fun _ -> dispatch Equals) ] [ str "=" ]
+          button [ classList [!!classes?button, true; !!classes?equalsButton, true]; OnClick (fun _ -> dispatch Equals) ] [ str "=" ]
         ]
       ]
     ]
@@ -158,6 +159,9 @@ let private styles (theme: ITheme) : IStyles list =
     ])
     Styles.Custom ("display", [
       TextAlign "right"
+    ])
+    Styles.Custom ("equalsButton", [
+      BackgroundColor "rgb(90, 190, 60, 0.75)"
     ])
   ]
   
