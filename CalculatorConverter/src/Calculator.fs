@@ -58,7 +58,7 @@ let private getResult (model: Model) =
   | "-" -> storedValue - inputValue |> string
   | "*" -> storedValue * inputValue |> string
   | "/" -> storedValue / inputValue |> string
-  | _ -> "0"
+  | _ -> inputValue |> string
 
 let update (msg:Msg) (model: Model) =
     match msg with
