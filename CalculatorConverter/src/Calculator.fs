@@ -5,7 +5,6 @@ module Calculator
  You can find more info about Elmish architecture and samples at https://elmish.github.io/
 *)
 
-open System
 open Fable.Core.JsInterop
 open Fable.Import.React
 open Fable.Helpers.React
@@ -16,17 +15,26 @@ open Fable.MaterialUI.Core
 type Model =
   {
     input: string
+    stored: string
+    action: string
   }
 
 type Msg =
   | AppendDigit of string
   | AppendDecimalPoint
   | DeleteDigit
+  | Add
+  | Substract
+  | Multiply
+  | Divide
+  | Equals
 
 let init () =
   let model =
     {
       input = "0"
+      stored = "0"
+      action = ""
     }
   model
 
@@ -39,45 +47,81 @@ let private appendDecimalPointToInput (input: string) =
 let private deleteFromInput (input: string) =
   if input.Length = 1 then "0" else input.Substring(0, input.Length - 1)
 
-let update (msg:Msg) (model:Model) =
+let private getResult (model: Model) =
+  let storedValue = float model.stored
+  let inputValue = float model.input
+
+  match model.action with
+  | "+" -> storedValue + inputValue |> string
+  | "-" -> storedValue - inputValue |> string
+  | "*" -> storedValue * inputValue |> string
+  | "/" -> storedValue / inputValue |> string
+  | _ -> "0"
+
+let update (msg:Msg) (model: Model) =
     match msg with
     | AppendDigit digit -> { model with input = appendDigitToInput model.input digit }
     | AppendDecimalPoint -> { model with input = appendDecimalPointToInput model.input }
     | DeleteDigit -> { model with input = deleteFromInput model.input }
-
+    | Add -> { model with stored = model.input; input = "0"; action = "+" }
+    | Substract -> { model with stored = model.input; input = "0"; action = "-" }
+    | Multiply -> { model with stored = model.input; input = "0"; action = "*" }
+    | Divide -> { model with stored = model.input; input = "0"; action = "/" }
+    | Equals -> { model with input = getResult model; stored = "0"; action = "" }
 
 let viewDefinition (classes: IClasses) model dispatch =
   div [] [
     div [ Class classes?calculator ] [
-      div [ Class classes?buttonRow ] [
-        button [ Class classes?button; OnClick (fun _ -> AppendDigit "7" |> dispatch) ] [ str "7" ]
-        button [ Class classes?button; OnClick (fun _ -> AppendDigit "8" |> dispatch) ] [ str "8" ]
-        button [ Class classes?button; OnClick (fun _ -> AppendDigit "9" |> dispatch) ] [ str "9" ]
+      div [ Class classes?digits ] [
+        div [ Class classes?buttonRow ] [
+          button [ Class classes?button; OnClick (fun _ -> AppendDigit "7" |> dispatch) ] [ str "7" ]
+          button [ Class classes?button; OnClick (fun _ -> AppendDigit "8" |> dispatch) ] [ str "8" ]
+          button [ Class classes?button; OnClick (fun _ -> AppendDigit "9" |> dispatch) ] [ str "9" ]
+        ]
+        div [ Class classes?buttonRow] [
+          button [ Class classes?button; OnClick (fun _ -> AppendDigit "4" |> dispatch) ] [ str "4" ]
+          button [ Class classes?button; OnClick (fun _ -> AppendDigit "5" |> dispatch) ] [ str "5" ]
+          button [ Class classes?button; OnClick (fun _ -> AppendDigit "6" |> dispatch) ] [ str "6" ]
+        ]
+        div [ Class classes?buttonRow] [
+          button [ Class classes?button; OnClick (fun _ -> AppendDigit "1" |> dispatch) ] [ str "1" ]
+          button [ Class classes?button; OnClick (fun _ -> AppendDigit "2" |> dispatch) ] [ str "2" ]
+          button [ Class classes?button; OnClick (fun _ -> AppendDigit "3" |> dispatch) ] [ str "3" ]
+        ]
+        div [ Class classes?buttonRow] [
+          button [ Class classes?button; OnClick (fun _ -> AppendDigit "0" |> dispatch) ] [ str "0" ]
+          button [ Class classes?button; OnClick (fun _ -> dispatch AppendDecimalPoint) ] [ str "." ]
+          button [ Class classes?button; OnClick (fun _ -> dispatch DeleteDigit) ] [ str "DEL" ]
+        ]
+        div [ Class classes?result ] [
+          span [Class classes?display] [ str model.input ]
+        ]
       ]
-      div [ Class classes?buttonRow] [
-        button [ Class classes?button; OnClick (fun _ -> AppendDigit "4" |> dispatch) ] [ str "4" ]
-        button [ Class classes?button; OnClick (fun _ -> AppendDigit "5" |> dispatch) ] [ str "5" ]
-        button [ Class classes?button; OnClick (fun _ -> AppendDigit "6" |> dispatch) ] [ str "6" ]
+      div [ Class classes?actions ] [
+        div [ Class classes?actionButtonColumn ] [
+          button [ Class classes?button; OnClick (fun _ -> dispatch Add) ] [ str "+" ]
+          button [ Class classes?button; OnClick (fun _ -> dispatch Substract) ] [ str "-" ]
+          button [ Class classes?button; OnClick (fun _ -> dispatch Multiply) ] [ str "*" ]
+          button [ Class classes?button; OnClick (fun _ -> dispatch Divide) ] [ str "/" ]
+          button [ Class classes?button; OnClick (fun _ -> dispatch Equals) ] [ str "=" ]
+        ]
       ]
-      div [ Class classes?buttonRow] [
-        button [ Class classes?button; OnClick (fun _ -> AppendDigit "1" |> dispatch) ] [ str "1" ]
-        button [ Class classes?button; OnClick (fun _ -> AppendDigit "2" |> dispatch) ] [ str "2" ]
-        button [ Class classes?button; OnClick (fun _ -> AppendDigit "3" |> dispatch) ] [ str "3" ]
-      ]
-      div [ Class classes?buttonRow] [
-        button [ Class classes?button; OnClick (fun _ -> AppendDigit "0" |> dispatch) ] [ str "0" ]
-        button [ Class classes?button; OnClick (fun _ -> dispatch AppendDecimalPoint) ] [ str "." ]
-        button [ Class classes?button; OnClick (fun _ -> dispatch DeleteDigit) ] [ str "DEL" ]
-      ]
-    ]
-    div [ Class classes?result ] [
-      span [Class classes?display] [ str model.input ]
     ]
   ]
 
 let private styles (theme: ITheme) : IStyles list =
   [
     Styles.Custom ("calculator", [
+      Display "flex"
+    ])
+    Styles.Custom ("digits", [
+    ])
+    Styles.Custom ("actions", [
+      MarginLeft "25px"
+    ])
+    Styles.Custom ("actionButtonColumn", [
+      Display "flex"
+      FlexDirection "column"
     ])
     Styles.Custom ("buttonRow", [
       Display "flex"
