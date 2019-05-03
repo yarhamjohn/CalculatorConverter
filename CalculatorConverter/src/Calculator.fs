@@ -30,16 +30,20 @@ let init () =
     }
   model
 
-let private formatInput (input: string) (digit: string) =
+let private appendDigitToInput (input: string) (digit: string) =
   if input.TrimStart('0').Length = 0 then digit else input + digit
 
-let private canAppendDecimalPoint (input: string) = not (input.Contains(".")) || input.Length = 0
+let private appendDecimalPointToInput (input: string) =
+  if input.Contains(".") || input.Length = 0 then input else input + "."
+
+let private deleteFromInput (input: string) =
+  if input.Length = 1 then "0" else input.Substring(0, input.Length - 1)
 
 let update (msg:Msg) (model:Model) =
     match msg with
-    | AppendDigit digit -> { model with input = formatInput model.input digit }
-    | AppendDecimalPoint -> { model with input = if canAppendDecimalPoint model.input then model.input + "." else model.input }
-    | DeleteDigit -> { model with input = if model.input.Length = 1 then "0" else model.input.Substring(0, model.input.Length - 1) }
+    | AppendDigit digit -> { model with input = appendDigitToInput model.input digit }
+    | AppendDecimalPoint -> { model with input = appendDecimalPointToInput model.input }
+    | DeleteDigit -> { model with input = deleteFromInput model.input }
 
 
 let viewDefinition (classes: IClasses) model dispatch =
