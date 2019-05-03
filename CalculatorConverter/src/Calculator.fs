@@ -1,10 +1,5 @@
 module Calculator
 
-(**
- The famous Increment/Decrement ported from Elm.
- You can find more info about Elmish architecture and samples at https://elmish.github.io/
-*)
-
 open Fable.Core.JsInterop
 open Fable.Import.React
 open Fable.Helpers.React
@@ -99,7 +94,9 @@ let viewDefinition (classes: IClasses) model dispatch =
         div [ Class classes?buttonRow] [
           button [ Class classes?button; OnClick (fun _ -> AppendDigit "0" |> dispatch) ] [ str "0" ]
           button [ Class classes?button; OnClick (fun _ -> dispatch AppendDecimalPoint) ] [ str "." ]
-          button [ Class classes?button; OnClick (fun _ -> dispatch DeleteDigit) ] [ str "DEL" ]
+          button [ Class classes?button; OnClick (fun _ -> dispatch DeleteDigit) ] [
+          img [ Src "backspace_grey_24x24.png" ]
+          ]
         ]
         div [ Class classes?result ] [
           span [Class classes?display] [ str model.input ]

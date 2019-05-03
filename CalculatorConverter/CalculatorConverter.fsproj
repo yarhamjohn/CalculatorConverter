@@ -15,6 +15,7 @@
       <Content Include="package.json" />
       <Content Include="public\fable.ico" />
       <Content Include="public\index.html" />
+      <Content Include="public\backspace_grey_24x24.png" />
       <Content Include="webpack.config.js" />
     </ItemGroup>
 </Project>
