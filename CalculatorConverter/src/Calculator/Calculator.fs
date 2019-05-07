@@ -49,11 +49,11 @@ let private getResult (model: Model) =
   let inputValue = float model.input
 
   match model.action with
-  | "+" -> storedValue + inputValue |> string
-  | "-" -> storedValue - inputValue |> string
-  | "*" -> storedValue * inputValue |> string
-  | "/" -> storedValue / inputValue |> string
-  | _ -> inputValue |> string
+  | "+" -> add storedValue inputValue |> string
+  | "-" -> substract storedValue inputValue |> string
+  | "*" -> multiply storedValue inputValue |> string
+  | "/" -> divide storedValue inputValue |> string
+  | _ -> null
 
 let update (msg:Msg) (model: Model) =
     match msg with
