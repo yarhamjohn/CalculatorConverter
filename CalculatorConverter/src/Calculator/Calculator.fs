@@ -34,38 +34,27 @@ let init () =
       action = ""
     }
   model
-
-let private appendDigitToInput (input: string) (digit: string) =
-  if input.TrimStart('0').Length = 0 then digit else input + digit
-
-let private appendDecimalPointToInput (input: string) =
-  if input.Contains(".") || input.Length = 0 then input else input + "."
-
-let private deleteFromInput (input: string) =
-  if input.Length = 1 then "0" else input.Substring(0, input.Length - 1)
-
-let private getResult (model: Model) =
-  let storedValue = float model.stored
-  let inputValue = float model.input
-
-  match model.action with
-  | "+" -> add storedValue inputValue |> string
-  | "-" -> substract storedValue inputValue |> string
-  | "*" -> multiply storedValue inputValue |> string
-  | "/" -> divide storedValue inputValue |> string
-  | _ -> null
+  
+let updateModel (action: string) (stored: string) (input: string) =
+  let model =
+    {
+      input = input
+      stored = stored
+      action = action
+    }
+  model
 
 let update (msg:Msg) (model: Model) =
     match msg with
     | AppendDigit digit -> { model with input = appendDigitToInput model.input digit }
     | AppendDecimalPoint -> { model with input = appendDecimalPointToInput model.input }
     | DeleteDigit -> { model with input = deleteFromInput model.input }
-    | Add -> { model with stored = model.input; input = "0"; action = "+" }
-    | Substract -> { model with stored = model.input; input = "0"; action = "-" }
-    | Multiply -> { model with stored = model.input; input = "0"; action = "*" }
-    | Divide -> { model with stored = model.input; input = "0"; action = "/" }
-    | Equals -> { model with input = getResult model; stored = "0"; action = "" }
-    | Clear -> { model with input = "0"; stored = "0"; action = "" }
+    | Add -> updateModel "+" model.input "0" 
+    | Substract -> updateModel "-" model.input "0" 
+    | Multiply -> updateModel "*" model.input "0" 
+    | Divide -> updateModel "/" model.input "0" 
+    | Equals -> updateModel "" "0" <| calculate model.action model.stored model.input
+    | Clear -> init()
 
 let viewDefinition (classes: IClasses) model dispatch =
   div [] [

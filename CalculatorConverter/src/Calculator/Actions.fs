@@ -1,14 +1,34 @@
 [<AutoOpen>]
 module Actions
 
-let add (leftSide: float) (rightSide: float) =
+let appendDigitToInput (input: string) (digit: string) =
+  if input.TrimStart('0').Length = 0 then digit else input + digit
+
+let appendDecimalPointToInput (input: string) =
+  if input.Contains(".") || input.Length = 0 then input else input + "."
+
+let deleteFromInput (input: string) =
+  if input.Length = 1 then "0" else input.Substring(0, input.Length - 1)
+  
+let private add (leftSide: float) (rightSide: float) =
   leftSide + rightSide
   
-let substract (leftSide: float) (rightSide: float) =
+let private substract (leftSide: float) (rightSide: float) =
   leftSide - rightSide
 
-let multiply (leftSide: float) (rightSide: float) =
+let private multiply (leftSide: float) (rightSide: float) =
   leftSide * rightSide
   
-let divide (leftSide: float) (rightSide: float) =
+let private divide (leftSide: float) (rightSide: float) =
   leftSide / rightSide
+  
+let calculate (action: string) (stored: string) (input: string) =
+  let leftSide = float stored
+  let rightSide = float input
+
+  match action with
+  | "+" -> add leftSide rightSide |> string
+  | "-" -> substract leftSide rightSide |> string
+  | "*" -> multiply leftSide rightSide |> string
+  | "/" -> divide leftSide rightSide |> string
+  | _ -> null
