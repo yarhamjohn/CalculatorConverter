@@ -13,6 +13,7 @@ type Model =
     input: string
     stored: string
     action: string
+    calculation: string list
   }
 
 type Msg =
@@ -32,32 +33,50 @@ let init () =
       input = "0"
       stored = "0"
       action = ""
+      calculation = []
     }
   model
   
-let updateModel (action: string) (stored: string) (input: string) =
-  let model =
+let updateAction (model: Model) (action: string) =
+  let display = if model.action = "=" then [" "; action; " "] else [model.input; " "; action; " "]
+  let nextInput = if model.action = "" then "0" else calculate model.action model.stored model.input
+  let m =
     {
-      input = input
-      stored = stored
+      input = nextInput
+      stored = model.input
       action = action
+      calculation = List.append model.calculation display
     }
-  model
+  m
+  
+let updateResult (model: Model) =
+  let result = calculate model.action model.stored model.input
+  let m =
+    {
+      input = result
+      stored = "0"
+      action = "="
+      calculation = List.append model.calculation [model.input]
+    }
+  m
 
 let update (msg:Msg) (model: Model) =
     match msg with
     | AppendDigit digit -> { model with input = appendDigitToInput model.input digit }
     | AppendDecimalPoint -> { model with input = appendDecimalPointToInput model.input }
     | DeleteDigit -> { model with input = deleteFromInput model.input }
-    | Add -> updateModel "+" model.input "0" 
-    | Substract -> updateModel "-" model.input "0" 
-    | Multiply -> updateModel "*" model.input "0" 
-    | Divide -> updateModel "/" model.input "0" 
-    | Equals -> updateModel "" "0" <| calculate model.action model.stored model.input
+    | Add -> updateAction model "+"  
+    | Substract -> updateAction model "-"  
+    | Multiply -> updateAction model "*"  
+    | Divide -> updateAction model "/"  
+    | Equals -> updateResult model
     | Clear -> init()
 
 let viewDefinition (classes: IClasses) model dispatch =
   div [] [
+    div [Class classes?calculation] [
+      span [] [ str (model.calculation |> List.fold (+) "") ]
+    ]
     div [ Class classes?calculator ] [
       div [ Class classes?digits ] [
         div [ Class classes?buttonRow ] [
@@ -130,6 +149,24 @@ let private styles (theme: ITheme) : IStyles list =
       MarginLeft "10px"
       Width "64px"
       Height "36px"
+    ])
+    Styles.Custom ("calculation", [
+      MarginTop "10px"
+      MarginLeft "10px"
+      Border "1px dashed rgb(200, 200, 200)"
+      BorderTopLeftRadius "5px"
+      BorderTopRightRadius "5px"
+      BorderBottomLeftRadius "5px"
+      BorderBottomRightRadius "5px"
+      Width "212px"
+      Height "36px"
+      PaddingLeft "10px"
+      PaddingRight "10px"
+      PaddingTop "5px"
+      PaddingBottom "5px"
+      Display "flex"
+      FlexDirection "column"
+      JustifyContent "space-around"
     ])
     Styles.Custom ("result", [
       BackgroundColor "white"

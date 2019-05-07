@@ -1,6 +1,7 @@
 [<AutoOpen>]
 module Actions
 
+//TODO: shouldn't append after pressing equals or multiple actions as shows result
 let appendDigitToInput (input: string) (digit: string) =
   if input.TrimStart('0').Length = 0 then digit else input + digit
 
