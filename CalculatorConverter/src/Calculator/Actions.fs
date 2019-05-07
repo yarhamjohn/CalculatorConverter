@@ -31,4 +31,4 @@ let calculate (action: string) (stored: string) (input: string) =
   | "-" -> substract leftSide rightSide |> string
   | "*" -> multiply leftSide rightSide |> string
   | "/" -> divide leftSide rightSide |> string
-  | _ -> null
+  | _ -> rightSide |> string
