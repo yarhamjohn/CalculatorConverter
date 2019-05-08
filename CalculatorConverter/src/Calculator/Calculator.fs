@@ -38,8 +38,8 @@ let init () =
   model
   
 let updateAction (model: Model) (action: string) =
-  let display = if model.action = "=" then [" "; action; " "] else [model.input; " "; action; " "]
   let nextInput = if model.action = "" then "0" else calculate model.action model.stored model.input
+  let display = if model.action = "=" then [""] else [" "; model.action; " "; model.input]
   let m =
     {
       input = nextInput
@@ -51,12 +51,13 @@ let updateAction (model: Model) (action: string) =
   
 let updateResult (model: Model) =
   let result = calculate model.action model.stored model.input
+  let display = if model.action = "=" then [""] else [" "; model.action; " "; model.input]
   let m =
     {
       input = result
       stored = "0"
       action = "="
-      calculation = List.append model.calculation [model.input]
+      calculation = List.append model.calculation display
     }
   m
 
@@ -74,8 +75,13 @@ let update (msg:Msg) (model: Model) =
 
 let viewDefinition (classes: IClasses) model dispatch =
   div [] [
-    div [Class classes?calculation] [
-      span [] [ str (model.calculation |> List.fold (+) "") ]
+    div [Class classes?display] [
+      div [Class classes?calculation] [
+        span [] [ str (model.calculation |> List.fold (+) "") ]
+      ]
+      div [Class classes?input] [
+        span [] [ str model.input ]
+      ]  
     ]
     div [ Class classes?calculator ] [
       div [ Class classes?digits ] [
@@ -106,16 +112,13 @@ let viewDefinition (classes: IClasses) model dispatch =
           img [ Src "backspace_grey_24x24.png" ]
           ]
         ]
-        div [ Class classes?result ] [
-          span [Class classes?display] [ str model.input ]
-        ]
       ]
       div [ Class classes?actions ] [
         div [ Class classes?actionButtonColumn ] [
-          button [ Class classes?button; OnClick (fun _ -> dispatch Add) ] [ str "+" ]
-          button [ Class classes?button; OnClick (fun _ -> dispatch Substract) ] [ str "-" ]
-          button [ Class classes?button; OnClick (fun _ -> dispatch Multiply) ] [ str "*" ]
-          button [ Class classes?button; OnClick (fun _ -> dispatch Divide) ] [ str "/" ]
+          button [ classList (if model.action = "+" then ([!!classes?button, true; !!classes?equalsButton, true]) else [!!classes?button, true;]); OnClick (fun _ -> dispatch Add) ] [ str "+" ]
+          button [ classList (if model.action = "-" then ([!!classes?button, true; !!classes?equalsButton, true]) else [!!classes?button, true;]); OnClick (fun _ -> dispatch Substract) ] [ str "-" ]
+          button [ classList (if model.action = "*" then ([!!classes?button, true; !!classes?equalsButton, true]) else [!!classes?button, true;]); OnClick (fun _ -> dispatch Multiply) ] [ str "*" ]
+          button [ classList (if model.action = "/" then ([!!classes?button, true; !!classes?equalsButton, true]) else [!!classes?button, true;]); OnClick (fun _ -> dispatch Divide) ] [ str "/" ]
           button [ classList [!!classes?button, true; !!classes?equalsButton, true]; OnClick (fun _ -> dispatch Equals) ] [ str "=" ]
         ]
       ]
@@ -150,45 +153,35 @@ let private styles (theme: ITheme) : IStyles list =
       Width "64px"
       Height "36px"
     ])
-    Styles.Custom ("calculation", [
-      MarginTop "10px"
-      MarginLeft "10px"
-      Border "1px dashed rgb(200, 200, 200)"
-      BorderTopLeftRadius "5px"
-      BorderTopRightRadius "5px"
-      BorderBottomLeftRadius "5px"
-      BorderBottomRightRadius "5px"
-      Width "212px"
-      Height "36px"
-      PaddingLeft "10px"
-      PaddingRight "10px"
-      PaddingTop "5px"
-      PaddingBottom "5px"
-      Display "flex"
-      FlexDirection "column"
-      JustifyContent "space-around"
-    ])
-    Styles.Custom ("result", [
-      BackgroundColor "white"
-      MarginTop "10px"
+    Styles.Custom ("display", [
       MarginLeft "10px"
       Border "1px solid rgb(200, 200, 200)"
       BorderTopLeftRadius "5px"
       BorderTopRightRadius "5px"
       BorderBottomLeftRadius "5px"
       BorderBottomRightRadius "5px"
-      Width "212px"
-      Height "36px"
-      PaddingLeft "10px"
-      PaddingRight "10px"
+      Width "311px"
+      Height "82px"
       PaddingTop "5px"
       PaddingBottom "5px"
+      TextAlign "right"
+    ])
+    Styles.Custom ("calculation", [
+      Height "35px"
       Display "flex"
       FlexDirection "column"
       JustifyContent "space-around"
+      BorderBottom "1px dashed rgb(200, 200, 200)"
+      PaddingLeft "10px"
+      PaddingRight "10px"
     ])
-    Styles.Custom ("display", [
-      TextAlign "right"
+    Styles.Custom ("input", [
+      Height "35px"
+      Display "flex"
+      FlexDirection "column"
+      JustifyContent "space-around"
+      PaddingLeft "10px"
+      PaddingRight "10px"
     ])
     Styles.Custom ("equalsButton", [
       BackgroundColor "rgb(90, 190, 60, 0.75)"
