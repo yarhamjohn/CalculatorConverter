@@ -14,6 +14,7 @@ type Model =
     stored: string
     action: string
     calculation: string list
+    extend: bool
   }
 
 type Msg =
@@ -34,36 +35,38 @@ let init () =
       stored = "0"
       action = ""
       calculation = []
+      extend = true
     }
   model
-  
+
+//TODO - if action clicked after aaction then change action  
 let updateAction (model: Model) (action: string) =
   let nextInput = if model.action = "" then "0" else calculate model.action model.stored model.input
-  let display = if model.action = "=" then [""] else [" "; model.action; " "; model.input]
   let m =
     {
       input = nextInput
       stored = model.input
       action = action
-      calculation = List.append model.calculation display
+      calculation = List.append model.calculation [model.input; " "; action]
+      extend = false
     }
   m
   
 let updateResult (model: Model) =
   let result = calculate model.action model.stored model.input
-  let display = if model.action = "=" then [""] else [" "; model.action; " "; model.input]
   let m =
     {
       input = result
       stored = "0"
       action = "="
-      calculation = List.append model.calculation display
+      calculation = []
+      extend = false
     }
   m
 
 let update (msg:Msg) (model: Model) =
     match msg with
-    | AppendDigit digit -> { model with input = appendDigitToInput model.input digit }
+    | AppendDigit digit -> { model with input = (if model.extend then appendDigitToInput model.input digit else digit); extend = true }
     | AppendDecimalPoint -> { model with input = appendDecimalPointToInput model.input }
     | DeleteDigit -> { model with input = deleteFromInput model.input }
     | Add -> updateAction model "+"  
