@@ -1,5 +1,6 @@
 module Calculator
 
+open System
 open Fable.Core.JsInterop
 open Fable.Import.React
 open Fable.Helpers.React
@@ -8,23 +9,44 @@ open Fable.MaterialUI
 open Fable.MaterialUI.Core
 open Fable.Core
 
+type CalculatorAction =
+  | Add
+  | Subtract
+  | Multiply
+  | Divide
+  | NoAction
+
+type CalculatorActivity =
+  | Operation
+  | Calculate
+  | DigitInput
+  | DecimalPointInput
+  | NoActivity
+
+let parseCalculatorAction = function
+  | Add -> "+"
+  | Subtract -> "-"
+  | Multiply -> "*"
+  | Divide -> "/"
+  | _ -> ""
+
 type Model =
   {
     input: string
     stored: string
-    action: string
+    action: CalculatorAction
     calculation: string list
-    extend: bool
+    lastActivity: CalculatorActivity
   }
 
 type Msg =
   | AppendDigit of string
   | AppendDecimalPoint
   | DeleteDigit
-  | Add
-  | Substract
-  | Multiply
-  | Divide
+  | AddMsg
+  | SubstractMsg
+  | MultiplyMsg
+  | DivideMsg
   | Equals
   | Clear
 
@@ -33,47 +55,74 @@ let init () =
     {
       input = "0"
       stored = "0"
-      action = ""
+      action = NoAction
       calculation = []
-      extend = true
+      lastActivity = NoActivity
     }
   model
 
-//TODO - if action clicked after aaction then change action  
-let updateAction (model: Model) (action: string) =
-  let nextInput = if model.action = "" then "0" else calculate model.action model.stored model.input
-  let m =
-    {
-      input = nextInput
-      stored = model.input
-      action = action
-      calculation = List.append model.calculation [model.input; " "; action]
-      extend = false
-    }
-  m
-  
-let updateResult (model: Model) =
-  let result = calculate model.action model.stored model.input
-  let m =
-    {
-      input = result
-      stored = "0"
-      action = "="
-      calculation = []
-      extend = false
-    }
-  m
+let calculate (model: Model) =
+  let leftSide = float model.stored
+  let rightSide = float model.input
+
+  match model.action with
+  | Add -> add leftSide rightSide |> string
+  | Subtract -> subtract leftSide rightSide |> string
+  | Multiply -> multiply leftSide rightSide |> string
+  | Divide -> divide leftSide rightSide |> string
+  | _ -> rightSide |> string
+
+let digitInput (model: Model) (digit: string) =
+  let newInput =
+    if model.lastActivity = DigitInput || model.lastActivity = DecimalPointInput
+    then appendDigitToInput model.input digit
+    else digit
+
+  {model with input = newInput; lastActivity = DigitInput}
+
+let decimalPointInput (model: Model) =
+  let newInput =
+    if model.lastActivity = DigitInput
+    then appendDecimalPointToInput model.input
+    else "0."
+
+  {model with input = newInput; lastActivity = DecimalPointInput}
+
+let actionInput (model: Model) (action: CalculatorAction) =
+  let newCalculation =
+    if model.lastActivity <> Operation
+    then List.append model.calculation [(if model.lastActivity = DecimalPointInput then deleteFromInput model.input else model.input); " "; parseCalculatorAction action; " "]
+    else
+      let shortenedList = model.calculation.[..model.calculation.Length - 3] //slicing is inclusive but index is 0-based
+      List.append shortenedList [parseCalculatorAction action; " "]
+
+  let result = if model.lastActivity = Operation then model.input else calculate model
+
+  {model with
+    input = result;
+    stored = result;
+    lastActivity = Operation;
+    action = action;
+    calculation = newCalculation}
+
+let resultOutput (model: Model) =
+  {model with
+    input = calculate model;
+    stored = "0";
+    lastActivity = Calculate;
+    action = NoAction;
+    calculation = []}
 
 let update (msg:Msg) (model: Model) =
     match msg with
-    | AppendDigit digit -> { model with input = (if model.extend then appendDigitToInput model.input digit else digit); extend = true }
-    | AppendDecimalPoint -> { model with input = appendDecimalPointToInput model.input }
+    | AppendDigit digit -> digitInput model digit
+    | AppendDecimalPoint -> decimalPointInput model
     | DeleteDigit -> { model with input = deleteFromInput model.input }
-    | Add -> updateAction model "+"  
-    | Substract -> updateAction model "-"  
-    | Multiply -> updateAction model "*"  
-    | Divide -> updateAction model "/"  
-    | Equals -> updateResult model
+    | AddMsg -> actionInput model Add
+    | SubstractMsg -> actionInput model Subtract
+    | MultiplyMsg -> actionInput model Multiply
+    | DivideMsg -> actionInput model Divide
+    | Equals -> resultOutput model
     | Clear -> init()
 
 let viewDefinition (classes: IClasses) model dispatch =
@@ -118,10 +167,10 @@ let viewDefinition (classes: IClasses) model dispatch =
       ]
       div [ Class classes?actions ] [
         div [ Class classes?actionButtonColumn ] [
-          button [ classList (if model.action = "+" then ([!!classes?button, true; !!classes?equalsButton, true]) else [!!classes?button, true;]); OnClick (fun _ -> dispatch Add) ] [ str "+" ]
-          button [ classList (if model.action = "-" then ([!!classes?button, true; !!classes?equalsButton, true]) else [!!classes?button, true;]); OnClick (fun _ -> dispatch Substract) ] [ str "-" ]
-          button [ classList (if model.action = "*" then ([!!classes?button, true; !!classes?equalsButton, true]) else [!!classes?button, true;]); OnClick (fun _ -> dispatch Multiply) ] [ str "*" ]
-          button [ classList (if model.action = "/" then ([!!classes?button, true; !!classes?equalsButton, true]) else [!!classes?button, true;]); OnClick (fun _ -> dispatch Divide) ] [ str "/" ]
+          button [ classList (if model.action = Add then ([!!classes?button, true; !!classes?equalsButton, true]) else [!!classes?button, true;]); OnClick (fun _ -> dispatch AddMsg) ] [ str "+" ]
+          button [ classList (if model.action = Subtract then ([!!classes?button, true; !!classes?equalsButton, true]) else [!!classes?button, true;]); OnClick (fun _ -> dispatch SubstractMsg) ] [ str "-" ]
+          button [ classList (if model.action = Multiply then ([!!classes?button, true; !!classes?equalsButton, true]) else [!!classes?button, true;]); OnClick (fun _ -> dispatch MultiplyMsg) ] [ str "*" ]
+          button [ classList (if model.action = Divide then ([!!classes?button, true; !!classes?equalsButton, true]) else [!!classes?button, true;]); OnClick (fun _ -> dispatch DivideMsg) ] [ str "/" ]
           button [ classList [!!classes?button, true; !!classes?equalsButton, true]; OnClick (fun _ -> dispatch Equals) ] [ str "=" ]
         ]
       ]
