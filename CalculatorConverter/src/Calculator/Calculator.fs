@@ -1,6 +1,5 @@
 module Calculator
 
-open System
 open Fable.Core.JsInterop
 open Fable.Import.React
 open Fable.Helpers.React
@@ -9,21 +8,21 @@ open Fable.MaterialUI
 open Fable.MaterialUI.Core
 open Fable.Core
 
-type CalculatorAction =
+type Operation =
   | Add
   | Subtract
   | Multiply
   | Divide
-  | NoAction
+  | NoOperation
 
-type CalculatorActivity =
+type Activity =
   | Operation
   | Calculate
   | DigitInput
   | DecimalPointInput
   | NoActivity
 
-let parseCalculatorAction = function
+let parseOperation = function
   | Add -> "+"
   | Subtract -> "-"
   | Multiply -> "*"
@@ -34,9 +33,9 @@ type Model =
   {
     input: string
     stored: string
-    action: CalculatorAction
+    lastActivity: Activity
+    operation: Operation
     calculation: string list
-    lastActivity: CalculatorActivity
   }
 
 type Msg =
@@ -55,9 +54,9 @@ let init () =
     {
       input = "0"
       stored = "0"
-      action = NoAction
-      calculation = []
       lastActivity = NoActivity
+      operation = NoOperation
+      calculation = []
     }
   model
 
@@ -65,14 +64,14 @@ let calculate (model: Model) =
   let leftSide = float model.stored
   let rightSide = float model.input
 
-  match model.action with
+  match model.operation with
   | Add -> add leftSide rightSide |> string
   | Subtract -> subtract leftSide rightSide |> string
   | Multiply -> multiply leftSide rightSide |> string
   | Divide -> divide leftSide rightSide |> string
   | _ -> rightSide |> string
 
-let digitInput (model: Model) (digit: string) =
+let inputDigit (model: Model) (digit: string) =
   let newInput =
     if model.lastActivity = DigitInput || model.lastActivity = DecimalPointInput
     then appendDigitToInput model.input digit
@@ -80,7 +79,7 @@ let digitInput (model: Model) (digit: string) =
 
   {model with input = newInput; lastActivity = DigitInput}
 
-let decimalPointInput (model: Model) =
+let inputDecimalPoint (model: Model) =
   let newInput =
     if model.lastActivity = DigitInput
     then appendDecimalPointToInput model.input
@@ -88,13 +87,16 @@ let decimalPointInput (model: Model) =
 
   {model with input = newInput; lastActivity = DecimalPointInput}
 
-let actionInput (model: Model) (action: CalculatorAction) =
+let performOperation (model: Model) (operation: Operation) =
+  let operationSymbol = parseOperation operation
   let newCalculation =
-    if model.lastActivity <> Operation
-    then List.append model.calculation [(if model.lastActivity = DecimalPointInput then deleteFromInput model.input else model.input); " "; parseCalculatorAction action; " "]
-    else
+    if model.lastActivity = Operation
+    then
       let shortenedList = model.calculation.[..model.calculation.Length - 3] //slicing is inclusive but index is 0-based
-      List.append shortenedList [parseCalculatorAction action; " "]
+      List.append shortenedList [operationSymbol; " "]
+    else
+      let valueToDisplay = if model.lastActivity = DecimalPointInput then deleteFromInput model.input else model.input
+      List.append model.calculation [valueToDisplay; " "; operationSymbol; " "]
 
   let result = if model.lastActivity = Operation then model.input else calculate model
 
@@ -102,27 +104,27 @@ let actionInput (model: Model) (action: CalculatorAction) =
     input = result;
     stored = result;
     lastActivity = Operation;
-    action = action;
+    operation = operation;
     calculation = newCalculation}
 
-let resultOutput (model: Model) =
+let calculateResult (model: Model) =
   {model with
     input = calculate model;
     stored = "0";
     lastActivity = Calculate;
-    action = NoAction;
+    operation = NoOperation;
     calculation = []}
 
 let update (msg:Msg) (model: Model) =
     match msg with
-    | AppendDigit digit -> digitInput model digit
-    | AppendDecimalPoint -> decimalPointInput model
+    | AppendDigit digit -> inputDigit model digit
+    | AppendDecimalPoint -> inputDecimalPoint model
     | DeleteDigit -> { model with input = deleteFromInput model.input }
-    | AddMsg -> actionInput model Add
-    | SubstractMsg -> actionInput model Subtract
-    | MultiplyMsg -> actionInput model Multiply
-    | DivideMsg -> actionInput model Divide
-    | Equals -> resultOutput model
+    | AddMsg -> performOperation model Add
+    | SubstractMsg -> performOperation model Subtract
+    | MultiplyMsg -> performOperation model Multiply
+    | DivideMsg -> performOperation model Divide
+    | Equals -> calculateResult model
     | Clear -> init()
 
 let viewDefinition (classes: IClasses) model dispatch =
@@ -165,13 +167,31 @@ let viewDefinition (classes: IClasses) model dispatch =
           ]
         ]
       ]
-      div [ Class classes?actions ] [
-        div [ Class classes?actionButtonColumn ] [
-          button [ classList (if model.action = Add then ([!!classes?button, true; !!classes?equalsButton, true]) else [!!classes?button, true;]); OnClick (fun _ -> dispatch AddMsg) ] [ str "+" ]
-          button [ classList (if model.action = Subtract then ([!!classes?button, true; !!classes?equalsButton, true]) else [!!classes?button, true;]); OnClick (fun _ -> dispatch SubstractMsg) ] [ str "-" ]
-          button [ classList (if model.action = Multiply then ([!!classes?button, true; !!classes?equalsButton, true]) else [!!classes?button, true;]); OnClick (fun _ -> dispatch MultiplyMsg) ] [ str "*" ]
-          button [ classList (if model.action = Divide then ([!!classes?button, true; !!classes?equalsButton, true]) else [!!classes?button, true;]); OnClick (fun _ -> dispatch DivideMsg) ] [ str "/" ]
-          button [ classList [!!classes?button, true; !!classes?equalsButton, true]; OnClick (fun _ -> dispatch Equals) ] [ str "=" ]
+      div [ Class classes?operations ] [
+        div [ Class classes?operationButtonColumn ] [
+          button [ classList (if model.operation = Add
+                              then ([!!classes?button, true; !!classes?equalsButton, true])
+                              else [!!classes?button, true;]);
+                   OnClick (fun _ -> dispatch AddMsg) ]
+                   [ parseOperation Add |> str ]
+          button [ classList (if model.operation = Subtract
+                              then ([!!classes?button, true; !!classes?equalsButton, true])
+                              else [!!classes?button, true;]);
+                   OnClick (fun _ -> dispatch SubstractMsg) ]
+                   [ parseOperation Subtract |> str ]
+          button [ classList (if model.operation = Multiply
+                              then ([!!classes?button, true; !!classes?equalsButton, true])
+                              else [!!classes?button, true;]);
+                   OnClick (fun _ -> dispatch MultiplyMsg) ]
+                   [ parseOperation Multiply |> str ]
+          button [ classList (if model.operation = Divide
+                              then ([!!classes?button, true; !!classes?equalsButton, true])
+                              else [!!classes?button, true;]);
+                   OnClick (fun _ -> dispatch DivideMsg) ]
+                   [ parseOperation Divide |> str ]
+          button [ classList [!!classes?button, true; !!classes?equalsButton, true];
+                   OnClick (fun _ -> dispatch Equals) ]
+                   [ str "=" ]
         ]
       ]
     ]
@@ -184,10 +204,10 @@ let private styles (theme: ITheme) : IStyles list =
     ])
     Styles.Custom ("digits", [
     ])
-    Styles.Custom ("actions", [
+    Styles.Custom ("operations", [
       MarginLeft "25px"
     ])
-    Styles.Custom ("actionButtonColumn", [
+    Styles.Custom ("operationButtonColumn", [
       Display "flex"
       FlexDirection "column"
     ])
