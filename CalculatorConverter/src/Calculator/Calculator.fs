@@ -48,6 +48,7 @@ type Msg =
   | DivideMsg
   | Equals
   | Clear
+  | ClearEntry
 
 let init () =
   let model =
@@ -126,6 +127,7 @@ let update (msg:Msg) (model: Model) =
     | DivideMsg -> performOperation model Divide
     | Equals -> calculateResult model
     | Clear -> init()
+    | ClearEntry -> { model with input = "0" }
 
 let viewDefinition (classes: IClasses) model dispatch =
   div [] [
@@ -141,8 +143,10 @@ let viewDefinition (classes: IClasses) model dispatch =
       div [ Class classes?digits ] [
         div [ Class classes?buttonRow ] [
           button [ Class classes?button; OnClick (fun _ -> Clear |> dispatch) ] [ str "C" ]
-          button [ Class classes?button; ] [ str "" ]
-          button [ Class classes?button; ] [ str "" ]
+          button [ Class classes?button; OnClick (fun _ -> ClearEntry |> dispatch) ] [ str "CE" ]
+          button [ Class classes?button; OnClick (fun _ -> dispatch DeleteDigit) ] [
+            img [ Src "backspace_grey_24x24.png" ]
+          ]
         ]
         div [ Class classes?buttonRow ] [
           button [ Class classes?button; OnClick (fun _ -> AppendDigit "7" |> dispatch) ] [ str "7" ]
@@ -162,9 +166,7 @@ let viewDefinition (classes: IClasses) model dispatch =
         div [ Class classes?buttonRow] [
           button [ Class classes?button; OnClick (fun _ -> AppendDigit "0" |> dispatch) ] [ str "0" ]
           button [ Class classes?button; OnClick (fun _ -> dispatch AppendDecimalPoint) ] [ str "." ]
-          button [ Class classes?button; OnClick (fun _ -> dispatch DeleteDigit) ] [
-          img [ Src "backspace_grey_24x24.png" ]
-          ]
+          button [ Class classes?button; ] [ str "" ]
         ]
       ]
       div [ Class classes?operations ] [
