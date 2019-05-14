@@ -8,27 +8,6 @@ open Fable.MaterialUI
 open Fable.MaterialUI.Core
 open Fable.Core
 
-type Operation =
-  | Add
-  | Subtract
-  | Multiply
-  | Divide
-  | NoOperation
-
-type Activity =
-  | Operation
-  | Calculate
-  | DigitInput
-  | DecimalPointInput
-  | NoActivity
-
-let parseOperation = function
-  | Add -> "+"
-  | Subtract -> "-"
-  | Multiply -> "*"
-  | Divide -> "/"
-  | _ -> ""
-
 type Model =
   {
     input: string
@@ -39,16 +18,16 @@ type Model =
   }
 
 type Msg =
-  | AppendDigit of string
-  | AppendDecimalPoint
-  | DeleteDigit
+  | AppendDigitMsg of string
+  | AppendDecimalPointMsg
+  | DeleteDigitMsg
   | AddMsg
   | SubstractMsg
   | MultiplyMsg
   | DivideMsg
-  | Equals
-  | Clear
-  | ClearEntry
+  | EqualsMsg
+  | ClearMsg
+  | ClearEntryMsg
   | InvertSignMsg
 
 let init () =
@@ -61,17 +40,6 @@ let init () =
       calculation = []
     }
   model
-
-let calculate (model: Model) =
-  let leftSide = float model.stored
-  let rightSide = float model.input
-
-  match model.operation with
-  | Add -> add leftSide rightSide |> string
-  | Subtract -> subtract leftSide rightSide |> string
-  | Multiply -> multiply leftSide rightSide |> string
-  | Divide -> divide leftSide rightSide |> string
-  | _ -> rightSide |> string
 
 let inputDigit (model: Model) (digit: string) =
   let newInput =
@@ -100,7 +68,7 @@ let performOperation (model: Model) (operation: Operation) =
       let valueToDisplay = if model.lastActivity = DecimalPointInput then deleteFromInput model.input else model.input
       List.append model.calculation [valueToDisplay; " "; operationSymbol; " "]
 
-  let result = if model.lastActivity = Operation then model.input else calculate model
+  let result = if model.lastActivity = Operation then model.input else calculate model.stored model.input model.operation
 
   {model with
     input = result;
@@ -111,7 +79,7 @@ let performOperation (model: Model) (operation: Operation) =
 
 let calculateResult (model: Model) =
   {model with
-    input = calculate model;
+    input = calculate model.stored model.input model.operation;
     stored = "0";
     lastActivity = Calculate;
     operation = NoOperation;
@@ -119,16 +87,16 @@ let calculateResult (model: Model) =
 
 let update (msg:Msg) (model: Model) =
     match msg with
-    | AppendDigit digit -> inputDigit model digit
-    | AppendDecimalPoint -> inputDecimalPoint model
-    | DeleteDigit -> { model with input = deleteFromInput model.input }
+    | AppendDigitMsg digit -> inputDigit model digit
+    | AppendDecimalPointMsg -> inputDecimalPoint model
+    | DeleteDigitMsg -> { model with input = deleteFromInput model.input }
     | AddMsg -> performOperation model Add
     | SubstractMsg -> performOperation model Subtract
     | MultiplyMsg -> performOperation model Multiply
     | DivideMsg -> performOperation model Divide
-    | Equals -> calculateResult model
-    | Clear -> init()
-    | ClearEntry -> { model with input = "0" }
+    | EqualsMsg -> calculateResult model
+    | ClearMsg -> init()
+    | ClearEntryMsg -> { model with input = "0" }
     | InvertSignMsg -> { model with input = string (float model.input * -1.0) }
 
 let viewDefinition (classes: IClasses) model dispatch =
@@ -144,30 +112,30 @@ let viewDefinition (classes: IClasses) model dispatch =
     div [ Class classes?calculator ] [
       div [ Class classes?digits ] [
         div [ Class classes?buttonRow ] [
-          button [ Class classes?button; OnClick (fun _ -> Clear |> dispatch) ] [ str "C" ]
-          button [ Class classes?button; OnClick (fun _ -> ClearEntry |> dispatch) ] [ str "CE" ]
-          button [ Class classes?button; OnClick (fun _ -> dispatch DeleteDigit) ] [
+          button [ Class classes?button; OnClick (fun _ -> ClearMsg |> dispatch) ] [ str "C" ]
+          button [ Class classes?button; OnClick (fun _ -> ClearEntryMsg |> dispatch) ] [ str "CE" ]
+          button [ Class classes?button; OnClick (fun _ -> dispatch DeleteDigitMsg) ] [
             img [ Src "backspace_grey_24x24.png" ]
           ]
         ]
         div [ Class classes?buttonRow ] [
-          button [ Class classes?button; OnClick (fun _ -> AppendDigit "7" |> dispatch) ] [ str "7" ]
-          button [ Class classes?button; OnClick (fun _ -> AppendDigit "8" |> dispatch) ] [ str "8" ]
-          button [ Class classes?button; OnClick (fun _ -> AppendDigit "9" |> dispatch) ] [ str "9" ]
+          button [ Class classes?button; OnClick (fun _ -> AppendDigitMsg "7" |> dispatch) ] [ str "7" ]
+          button [ Class classes?button; OnClick (fun _ -> AppendDigitMsg "8" |> dispatch) ] [ str "8" ]
+          button [ Class classes?button; OnClick (fun _ -> AppendDigitMsg "9" |> dispatch) ] [ str "9" ]
         ]
         div [ Class classes?buttonRow] [
-          button [ Class classes?button; OnClick (fun _ -> AppendDigit "4" |> dispatch) ] [ str "4" ]
-          button [ Class classes?button; OnClick (fun _ -> AppendDigit "5" |> dispatch) ] [ str "5" ]
-          button [ Class classes?button; OnClick (fun _ -> AppendDigit "6" |> dispatch) ] [ str "6" ]
+          button [ Class classes?button; OnClick (fun _ -> AppendDigitMsg "4" |> dispatch) ] [ str "4" ]
+          button [ Class classes?button; OnClick (fun _ -> AppendDigitMsg "5" |> dispatch) ] [ str "5" ]
+          button [ Class classes?button; OnClick (fun _ -> AppendDigitMsg "6" |> dispatch) ] [ str "6" ]
         ]
         div [ Class classes?buttonRow] [
-          button [ Class classes?button; OnClick (fun _ -> AppendDigit "1" |> dispatch) ] [ str "1" ]
-          button [ Class classes?button; OnClick (fun _ -> AppendDigit "2" |> dispatch) ] [ str "2" ]
-          button [ Class classes?button; OnClick (fun _ -> AppendDigit "3" |> dispatch) ] [ str "3" ]
+          button [ Class classes?button; OnClick (fun _ -> AppendDigitMsg "1" |> dispatch) ] [ str "1" ]
+          button [ Class classes?button; OnClick (fun _ -> AppendDigitMsg "2" |> dispatch) ] [ str "2" ]
+          button [ Class classes?button; OnClick (fun _ -> AppendDigitMsg "3" |> dispatch) ] [ str "3" ]
         ]
         div [ Class classes?buttonRow] [
-          button [ Class classes?button; OnClick (fun _ -> dispatch AppendDecimalPoint) ] [ str "." ]
-          button [ Class classes?button; OnClick (fun _ -> AppendDigit "0" |> dispatch) ] [ str "0" ]
+          button [ Class classes?button; OnClick (fun _ -> dispatch AppendDecimalPointMsg) ] [ str "." ]
+          button [ Class classes?button; OnClick (fun _ -> AppendDigitMsg "0" |> dispatch) ] [ str "0" ]
           button [ Class classes?button; OnClick (fun _ -> dispatch InvertSignMsg)] [ str "+ / -" ]
         ]
       ]
@@ -194,7 +162,7 @@ let viewDefinition (classes: IClasses) model dispatch =
                    OnClick (fun _ -> dispatch DivideMsg) ]
                    [ parseOperation Divide |> str ]
           button [ classList [!!classes?button, true; !!classes?equalsButton, true];
-                   OnClick (fun _ -> dispatch Equals) ]
+                   OnClick (fun _ -> dispatch EqualsMsg) ]
                    [ str "=" ]
         ]
       ]
