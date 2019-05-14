@@ -49,6 +49,7 @@ type Msg =
   | Equals
   | Clear
   | ClearEntry
+  | InvertSignMsg
 
 let init () =
   let model =
@@ -128,6 +129,7 @@ let update (msg:Msg) (model: Model) =
     | Equals -> calculateResult model
     | Clear -> init()
     | ClearEntry -> { model with input = "0" }
+    | InvertSignMsg -> { model with input = string (float model.input * -1.0) }
 
 let viewDefinition (classes: IClasses) model dispatch =
   div [] [
@@ -164,9 +166,9 @@ let viewDefinition (classes: IClasses) model dispatch =
           button [ Class classes?button; OnClick (fun _ -> AppendDigit "3" |> dispatch) ] [ str "3" ]
         ]
         div [ Class classes?buttonRow] [
-          button [ Class classes?button; OnClick (fun _ -> AppendDigit "0" |> dispatch) ] [ str "0" ]
           button [ Class classes?button; OnClick (fun _ -> dispatch AppendDecimalPoint) ] [ str "." ]
-          button [ Class classes?button; ] [ str "" ]
+          button [ Class classes?button; OnClick (fun _ -> AppendDigit "0" |> dispatch) ] [ str "0" ]
+          button [ Class classes?button; OnClick (fun _ -> dispatch InvertSignMsg)] [ str "+ / -" ]
         ]
       ]
       div [ Class classes?operations ] [
