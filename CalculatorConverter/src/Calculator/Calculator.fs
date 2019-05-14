@@ -99,8 +99,11 @@ let update (msg:Msg) (model: Model) =
     | ClearEntryMsg -> { model with input = "0" }
     | InvertSignMsg -> { model with input = string (float model.input * -1.0) }
 
+let digitPressed (key: string) =
+  key = "0" || key = "1" || key = "2" || key = "3" || key = "4" || key = "5" || key = "6" || key = "7" || key = "8" || key = "9"
+  
 let viewDefinition (classes: IClasses) model dispatch =
-  div [] [
+  div [OnKeyPress (fun keyboardEvent -> if digitPressed keyboardEvent.key then keyboardEvent.key |> AppendDigitMsg |> dispatch)] [
     div [Class classes?display] [
       div [Class classes?calculation] [
         span [] [ str (model.calculation |> List.fold (+) "") ]
