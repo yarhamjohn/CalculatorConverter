@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "CalculatorConverter", "CalculatorConverter\CalculatorConverter.fsproj", "{B849ABCF-353D-442B-9CF9-7BBB8F0C7ED2}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "CalculatorConverterTests", "CalculatorConverterTests\CalculatorConverterTests.fsproj", "{7E6BA2A8-02F6-4A2F-9462-1C71DF7F55F6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{B849ABCF-353D-442B-9CF9-7BBB8F0C7ED2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B849ABCF-353D-442B-9CF9-7BBB8F0C7ED2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B849ABCF-353D-442B-9CF9-7BBB8F0C7ED2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7E6BA2A8-02F6-4A2F-9462-1C71DF7F55F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E6BA2A8-02F6-4A2F-9462-1C71DF7F55F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7E6BA2A8-02F6-4A2F-9462-1C71DF7F55F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E6BA2A8-02F6-4A2F-9462-1C71DF7F55F6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
