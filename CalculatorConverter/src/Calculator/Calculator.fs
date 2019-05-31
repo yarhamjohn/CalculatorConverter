@@ -113,7 +113,7 @@ let viewDefinition (classes: IClasses) model dispatch =
       ]  
     ]
     div [ Class classes?calculator ] [
-      div [ Class classes?digits ] [
+      div [ ] [
         div [ Class classes?buttonRow ] [
           button [ Class classes?button; OnClick (fun _ -> ClearMsg |> dispatch) ] [ str "C" ]
           button [ Class classes?button; OnClick (fun _ -> ClearEntryMsg |> dispatch) ] [ str "CE" ]
@@ -144,27 +144,19 @@ let viewDefinition (classes: IClasses) model dispatch =
       ]
       div [ Class classes?operations ] [
         div [ Class classes?operationButtonColumn ] [
-          button [ classList (if model.operation = Add
-                              then ([!!classes?button, true; !!classes?equalsButton, true])
-                              else [!!classes?button, true;]);
+          button [ Class (classes?button + " " + (if model.operation = Add then classes?equalsButton else ""))
                    OnClick (fun _ -> dispatch AddMsg) ]
                    [ parseOperation Add |> str ]
-          button [ classList (if model.operation = Subtract
-                              then ([!!classes?button, true; !!classes?equalsButton, true])
-                              else [!!classes?button, true;]);
+          button [ Class (classes?button + " " + (if model.operation = Subtract then classes?equalsButton else ""))
                    OnClick (fun _ -> dispatch SubstractMsg) ]
                    [ parseOperation Subtract |> str ]
-          button [ classList (if model.operation = Multiply
-                              then ([!!classes?button, true; !!classes?equalsButton, true])
-                              else [!!classes?button, true;]);
+          button [ Class (classes?button + " " + (if model.operation = Multiply then classes?equalsButton else ""))
                    OnClick (fun _ -> dispatch MultiplyMsg) ]
                    [ parseOperation Multiply |> str ]
-          button [ classList (if model.operation = Divide
-                              then ([!!classes?button, true; !!classes?equalsButton, true])
-                              else [!!classes?button, true;]);
+          button [ Class (classes?button + " " + (if model.operation = Divide then classes?equalsButton else ""))
                    OnClick (fun _ -> dispatch DivideMsg) ]
                    [ parseOperation Divide |> str ]
-          button [ classList [!!classes?button, true; !!classes?equalsButton, true];
+          button [ Class (classes?button + " " + classes?equalsButton)
                    OnClick (fun _ -> dispatch EqualsMsg) ]
                    [ str "=" ]
         ]
@@ -176,8 +168,6 @@ let private styles (theme: ITheme) : IStyles list =
   [
     Styles.Custom ("calculator", [
       Display "flex"
-    ])
-    Styles.Custom ("digits", [
     ])
     Styles.Custom ("operations", [
       MarginLeft "25px"
