@@ -1,5 +1,6 @@
 module Calculator
 
+open System
 open Fable.Core.JsInterop
 open Fable.Import.React
 open Fable.Helpers.React
@@ -29,6 +30,7 @@ type Msg =
   | ClearMsg
   | ClearEntryMsg
   | InvertSignMsg
+  | ReplaceInputMsg of string
 
 let init () =
   let model =
@@ -98,6 +100,7 @@ let update (msg:Msg) (model: Model) =
     | ClearMsg -> init()
     | ClearEntryMsg -> { model with input = "0" }
     | InvertSignMsg -> { model with input = string (float model.input * -1.0) }
+    | ReplaceInputMsg value -> { model with input = value }
 
 let digitPressed (key: string) =
   key = "0" || key = "1" || key = "2" || key = "3" || key = "4" || key = "5" || key = "6" || key = "7" || key = "8" || key = "9"
@@ -160,6 +163,14 @@ let viewDefinition (classes: IClasses) model dispatch =
                    OnClick (fun _ -> dispatch EqualsMsg) ]
                    [ str "=" ]
         ]
+        div [ Class classes?operationButtonColumn ] [
+          button [ Class classes?button
+                   OnClick (fun _ -> (ReplaceInputMsg (string Math.PI) |> dispatch)) ]
+                   [ str "π" ]
+          button [ Class classes?button
+                   OnClick (fun _ -> (ReplaceInputMsg (string Math.E) |> dispatch)) ]
+                   [ str "e" ]
+                   [ str "%" ]
       ]
     ]
   ]
@@ -171,6 +182,7 @@ let private styles (theme: ITheme) : IStyles list =
     ])
     Styles.Custom ("operations", [
       MarginLeft "25px"
+      Display "flex"
     ])
     Styles.Custom ("operationButtonColumn", [
       Display "flex"
@@ -183,6 +195,7 @@ let private styles (theme: ITheme) : IStyles list =
       BackgroundColor "rgb(200, 200, 200)"
       MarginTop "10px"
       MarginLeft "10px"
+      CSSProp.TextTransform "none"
     ]
     Styles.Custom ("buttonSpace", [
       MarginTop "10px"
