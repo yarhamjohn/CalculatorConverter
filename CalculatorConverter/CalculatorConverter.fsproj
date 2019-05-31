@@ -15,9 +15,9 @@
         <Compile Include="src\App.fs" />
       <Content Include="package-lock.json" />
       <Content Include="package.json" />
-      <Content Include="public\fable.ico" />
       <Content Include="public\index.html" />
       <Content Include="public\backspace_grey_24x24.png" />
+      <Content Include="public\twotone_pages_black_18dp.png" />
       <Content Include="webpack.config.js" />
     </ItemGroup>
 </Project>
