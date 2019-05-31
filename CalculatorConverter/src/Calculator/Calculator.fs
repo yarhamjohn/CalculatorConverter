@@ -31,6 +31,8 @@ type Msg =
   | ClearEntryMsg
   | InvertSignMsg
   | ReplaceInputMsg of string
+  | OpenParenthesisMsg
+  | CloseParenthesisMsg
 
 let init () =
   let model =
@@ -59,6 +61,17 @@ let inputDecimalPoint (model: Model) =
 
   {model with input = newInput; lastActivity = DecimalPointInput}
 
+let openParenthesis (model: Model) =
+  if model.calculation.Length > 0 && model.calculation.[model.calculation.Length - 1] = ")"
+  then
+    let index = model.calculation |> List.rev |> List.findIndex (fun x -> x = "(")
+    { model with calculation = model.calculation.[..(model.calculation.Length - 1 - index)] }
+  else { model with calculation = List.append model.calculation ["("] }
+  
+//TODO: Close Parenthesi isn't working yet!
+let closeParenthesis (model: Model) =
+  { model with calculation = List.append model.calculation [")"] }
+  
 let performOperation (model: Model) (operation: Operation) =
   let operationSymbol = parseOperation operation
   let newCalculation =
@@ -101,6 +114,8 @@ let update (msg:Msg) (model: Model) =
     | ClearEntryMsg -> { model with input = "0" }
     | InvertSignMsg -> { model with input = string (float model.input * -1.0) }
     | ReplaceInputMsg value -> { model with input = value }
+    | OpenParenthesisMsg -> openParenthesis model
+    | CloseParenthesisMsg -> closeParenthesis model
 
 let digitPressed (key: string) =
   key = "0" || key = "1" || key = "2" || key = "3" || key = "4" || key = "5" || key = "6" || key = "7" || key = "8" || key = "9"
@@ -170,7 +185,17 @@ let viewDefinition (classes: IClasses) model dispatch =
           button [ Class classes?button
                    OnClick (fun _ -> (ReplaceInputMsg (string Math.E) |> dispatch)) ]
                    [ str "e" ]
-                   [ str "%" ]
+          button [ Class classes?button
+                   OnClick (fun _ -> (dispatch OpenParenthesisMsg)) ]
+                   [ str "(" ]
+          button [ Class classes?button
+                   OnClick (fun _ -> (dispatch CloseParenthesisMsg)) ]
+                   [ str ")" ]
+          //TODO Percentage button doesn't work yet
+          button [ Class classes?button
+                   OnClick (fun _ -> ()) ]
+                   [ str "%" ]                  
+        ]
       ]
     ]
   ]

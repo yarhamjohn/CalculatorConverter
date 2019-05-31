@@ -6,6 +6,8 @@ type Activity =
   | Calculate
   | DigitInput
   | DecimalPointInput
+  | OpenParenthesis
+  | CloseParenthesis
   | NoActivity
 
 let appendDigitToInput (input: string) (digit: string) =
