@@ -1,6 +1,7 @@
 module Calculator
 
 open System
+open System.Diagnostics
 open Fable.Core.JsInterop
 open Fable.Import.React
 open Fable.Helpers.React
@@ -65,12 +66,36 @@ let openParenthesis (model: Model) =
   if model.calculation.Length > 0 && model.calculation.[model.calculation.Length - 1] = ")"
   then
     let index = model.calculation |> List.rev |> List.findIndex (fun x -> x = "(")
-    { model with calculation = model.calculation.[..(model.calculation.Length - 1 - index)] }
-  else { model with calculation = List.append model.calculation ["("] }
+    { model with lastActivity = OpenParenthesis; calculation = model.calculation.[..(model.calculation.Length - 1 - index)] }
+  else { model with lastActivity = OpenParenthesis; calculation = List.append model.calculation ["("] }
   
-//TODO: Close Parenthesi isn't working yet!
+let compareParentheses (counts: List<Tuple<string, int>>) =
+  if counts.Length = 0
+  then false
+  else
+
+  let selectOpen = counts |> List.filter(fun elem -> fst(elem) = "(")
+  let numOpen = if selectOpen.Length = 0 then 0 else snd(selectOpen.[0])
+  
+  let selectClose = counts |> List.filter(fun elem -> fst(elem) = ")")
+  let numClose = if selectClose.Length = 0 then 0 else snd(selectClose.[0])
+  
+  numOpen > numClose
+    
+//TODO: Closing a parenthesis should calculate a new input/stored.
+// ((2 x 3) -> input = 6, stored = 0?
+// ((2 x 3) + (2 x 4) -> input = 8, stored = 0?
+// ((2 x 3) + (2 x 4)) -> input = 14, stored = 0?
+// ((2 x 3) + (2 x 4) + -> input = 14, stored = 14?
+// ((2 x 3) + (2 x 4) + 5) -> input = 19, stored = 19?
 let closeParenthesis (model: Model) =
-  { model with calculation = List.append model.calculation [")"] }
+  let unclosedParenthesis = model.calculation
+                            |> List.countBy (fun elem -> elem)
+                            |> compareParentheses
+
+  if unclosedParenthesis
+  then { model with lastActivity = CloseParenthesis; calculation = List.append model.calculation [model.input; ")"; " "] }
+  else model
   
 let performOperation (model: Model) (operation: Operation) =
   let operationSymbol = parseOperation operation
@@ -79,6 +104,8 @@ let performOperation (model: Model) (operation: Operation) =
     then
       let shortenedList = model.calculation.[..model.calculation.Length - 3] //slicing is inclusive but index is 0-based
       List.append shortenedList [operationSymbol; " "]
+    else if model.lastActivity = CloseParenthesis
+    then List.append model.calculation [operationSymbol; " "]
     else
       let valueToDisplay = if model.lastActivity = DecimalPointInput then deleteFromInput model.input else model.input
       List.append model.calculation [valueToDisplay; " "; operationSymbol; " "]
