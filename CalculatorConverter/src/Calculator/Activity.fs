@@ -10,23 +10,64 @@ type Activity =
   | CloseParenthesis
   | NoActivity
 
-let appendDigitToInput (input: string) (digit: string) =
-  let trimmedInput = input.TrimStart('0')
-  
-  if trimmedInput.Length = 0 then digit
-  elif trimmedInput.Substring(0, 1) = "." then "0" + trimmedInput + digit
-  else trimmedInput + digit
+let appendDigit (input: string list) (digit: string) =
+  List.append input [digit]
 
-let appendDecimalPointToInput (input: string) =
-  if input.Length = 0 then "0."
-  elif input.Substring(0, 1) = "." then "0" + input
-  elif input.Contains(".") then input
-  else input + "."
+let appendDecimalPoint (input: string list) =
+  if List.contains "." input then input else List.append input ["."]
 
-let deleteFromInput (input: string) =
-  if input.Length <= 1 then "0"
-  else
-    let result = input.Substring(0, input.Length - 1)
-    if result = "-" then "0"
-    elif result = "." then "0."
-    else result
+let evaluateInput (input: string list) =
+  String.concat "" input |> float
+
+let serializeInput (input: string list) =
+  evaluateInput input |> string
+
+let formatInput (input: string list) =
+  let newInput = serializeInput input
+  Seq.toList newInput |> List.map (fun char -> char.ToString())
+
+let getElementIndex (calculation: string list) (element: string) =
+  if List.contains element calculation
+  then calculation |> List.findIndexBack (fun x -> x = element)
+  else -1
+
+let deleteLastElement (calculation: string list) =
+  match calculation.Length with
+  | 0 | 1 -> ["0"]
+  | _ -> calculation.[..calculation.Length - 2]
+
+let deleteLastPartialCalculation (calculation: string list) =
+  let index = getElementIndex calculation "("
+  match index with
+  | -1 -> calculation
+  | _ -> calculation.[..index - 1]
+
+let getLastElement (calculation: string list) =
+  match calculation.Length with
+  | 0 -> ""
+  | _ -> calculation.[calculation.Length - 1]
+
+let appendOperation (calculation: string list) (operation: Operation) =
+  List.append calculation [parseOperation operation]
+
+let appendInput (calculation: string list) (input: string list) =
+  match getLastElement input with
+  | "" -> calculation
+  | "." -> List.concat [calculation; deleteLastElement input]
+  | _ -> List.append calculation input
+
+let replaceLastOperation (calculation: string list) (operation: Operation) =
+  deleteLastElement calculation |> appendOperation <| operation
+
+let countOccurences (calculation: string list) (element: string) =
+  let calculationElements = calculation |> List.countBy (fun elem -> elem)
+  let matchingElements = calculationElements |> List.filter(fun elem -> fst(elem) = element)
+  match matchingElements.Length with
+  | 0 -> 0
+  | _ -> snd(matchingElements.[0])
+
+let allParenthesesAreClosed (calculation: string list) =
+  let numOpenParentheses = countOccurences calculation "("
+  match numOpenParentheses with
+  | 0 -> false
+  | _ -> numOpenParentheses = countOccurences calculation ")"

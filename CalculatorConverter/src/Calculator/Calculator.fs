@@ -1,7 +1,6 @@
 module Calculator
 
 open System
-open System.Diagnostics
 open Fable.Core.JsInterop
 open Fable.Import.React
 open Fable.Helpers.React
@@ -12,10 +11,9 @@ open Fable.Core
 
 type Model =
   {
-    input: string
-    stored: string
+    input: string list
     lastActivity: Activity
-    operation: Operation
+    currentOperation: Operation
     calculation: string list
   }
 
@@ -31,115 +29,79 @@ type Msg =
   | ClearMsg
   | ClearEntryMsg
   | InvertSignMsg
-  | ReplaceInputMsg of string
+  | ReplaceInputMsg of string list
   | OpenParenthesisMsg
   | CloseParenthesisMsg
 
 let init () =
-  let model =
-    {
-      input = "0"
-      stored = "0"
-      lastActivity = NoActivity
-      operation = NoOperation
-      calculation = []
-    }
-  model
+  {
+    input = ["0"]
+    lastActivity = NoActivity
+    currentOperation = NoOperation
+    calculation = []
+  }
 
 let inputDigit (model: Model) (digit: string) =
-  let newInput =
-    if model.lastActivity = DigitInput || model.lastActivity = DecimalPointInput
-    then appendDigitToInput model.input digit
-    else digit
-
-  {model with input = newInput; lastActivity = DigitInput}
+  let newInput = appendDigit model.input digit |> formatInput
+  { model with input = newInput; lastActivity = DigitInput }
 
 let inputDecimalPoint (model: Model) =
-  let newInput =
-    if model.lastActivity = DigitInput
-    then appendDecimalPointToInput model.input
-    else "0."
-
-  {model with input = newInput; lastActivity = DecimalPointInput}
+  let newInput = appendDecimalPoint model.input |> formatInput
+  { model with input = newInput; lastActivity = DecimalPointInput }
 
 let openParenthesis (model: Model) =
-  if model.calculation.Length > 0 && model.calculation.[model.calculation.Length - 1] = ")"
-  then
-    let index = model.calculation |> List.rev |> List.findIndex (fun x -> x = "(")
-    { model with lastActivity = OpenParenthesis; calculation = model.calculation.[..(model.calculation.Length - 1 - index)] }
-  else { model with lastActivity = OpenParenthesis; calculation = List.append model.calculation ["("] }
-  
-let compareParentheses (counts: List<Tuple<string, int>>) =
-  if counts.Length = 0
-  then false
-  else
-
-  let selectOpen = counts |> List.filter(fun elem -> fst(elem) = "(")
-  let numOpen = if selectOpen.Length = 0 then 0 else snd(selectOpen.[0])
-  
-  let selectClose = counts |> List.filter(fun elem -> fst(elem) = ")")
-  let numClose = if selectClose.Length = 0 then 0 else snd(selectClose.[0])
-  
-  numOpen > numClose
-    
-//TODO: Closing a parenthesis should calculate a new input/stored.
-// ((2 x 3) -> input = 6, stored = 0?
-// ((2 x 3) + (2 x 4) -> input = 8, stored = 0?
-// ((2 x 3) + (2 x 4)) -> input = 14, stored = 0?
-// ((2 x 3) + (2 x 4) + -> input = 14, stored = 14?
-// ((2 x 3) + (2 x 4) + 5) -> input = 19, stored = 19?
-let closeParenthesis (model: Model) =
-  let unclosedParenthesis = model.calculation
-                            |> List.countBy (fun elem -> elem)
-                            |> compareParentheses
-
-  if unclosedParenthesis
-  then { model with lastActivity = CloseParenthesis; calculation = List.append model.calculation [model.input; ")"; " "] }
-  else model
-  
-let performOperation (model: Model) (operation: Operation) =
-  let operationSymbol = parseOperation operation
   let newCalculation =
-    if model.lastActivity = Operation
-    then
-      let shortenedList = model.calculation.[..model.calculation.Length - 3] //slicing is inclusive but index is 0-based
-      List.append shortenedList [operationSymbol; " "]
-    else if model.lastActivity = CloseParenthesis
-    then List.append model.calculation [operationSymbol; " "]
-    else
-      let valueToDisplay = if model.lastActivity = DecimalPointInput then deleteFromInput model.input else model.input
-      List.append model.calculation [valueToDisplay; " "; operationSymbol; " "]
+    if model.calculation.Length > 0 && getLastElement model.calculation = ")"
+    then deleteLastPartialCalculation model.calculation
+    else List.append model.calculation ["("]
 
-  let result = if model.lastActivity = Operation then model.input else calculate model.stored model.input model.operation
+  { model with lastActivity = OpenParenthesis; calculation = newCalculation }
+
+//TODO: Need to calculate the appropriate input...
+let closeParenthesis (model: Model) =
+  if allParenthesesAreClosed model.calculation
+  then model
+  else { model with lastActivity = CloseParenthesis; calculation = List.concat [model.calculation; model.input; [")"; " "]] }
+
+let performOperation (model: Model) (operation: Operation) =
+  let newCalculation =
+    match model.lastActivity with
+    | Operation -> replaceLastOperation model.calculation operation
+    | CloseParenthesis -> appendOperation model.calculation operation
+    | _ -> appendInput model.calculation model.input
+           |> appendOperation <| operation
+
+  let newInput = if model.lastActivity = Operation
+                 then model.input
+                 else calculate model.calculation
 
   {model with
-    input = result;
-    stored = result;
+    input = newInput;
     lastActivity = Operation;
-    operation = operation;
+    currentOperation = operation;
     calculation = newCalculation}
 
 let calculateResult (model: Model) =
+  let finalCalculation = List.append model.calculation [serializeInput model.input]
   {model with
-    input = calculate model.stored model.input model.operation;
-    stored = "0";
+    input = calculate finalCalculation |> formatInput;
     lastActivity = Calculate;
-    operation = NoOperation;
+    currentOperation = NoOperation;
     calculation = []}
 
 let update (msg:Msg) (model: Model) =
     match msg with
     | AppendDigitMsg digit -> inputDigit model digit
     | AppendDecimalPointMsg -> inputDecimalPoint model
-    | DeleteDigitMsg -> { model with input = deleteFromInput model.input }
+    | DeleteDigitMsg -> { model with input = deleteLastElement model.input }
     | AddMsg -> performOperation model Add
     | SubstractMsg -> performOperation model Subtract
     | MultiplyMsg -> performOperation model Multiply
     | DivideMsg -> performOperation model Divide
     | EqualsMsg -> calculateResult model
     | ClearMsg -> init()
-    | ClearEntryMsg -> { model with input = "0" }
-    | InvertSignMsg -> { model with input = string (float model.input * -1.0) }
+    | ClearEntryMsg -> { model with input = ["0"] }
+    | InvertSignMsg -> { model with input = [string ((evaluateInput model.input) * -1.0)] }
     | ReplaceInputMsg value -> { model with input = value }
     | OpenParenthesisMsg -> openParenthesis model
     | CloseParenthesisMsg -> closeParenthesis model
@@ -154,7 +116,7 @@ let viewDefinition (classes: IClasses) model dispatch =
         span [] [ str (model.calculation |> List.fold (+) "") ]
       ]
       div [Class classes?input] [
-        span [] [ str model.input ]
+        span [] [ serializeInput model.input |> str ]
       ]  
     ]
     div [ Class classes?calculator ] [
@@ -189,16 +151,16 @@ let viewDefinition (classes: IClasses) model dispatch =
       ]
       div [ Class classes?operations ] [
         div [ Class classes?operationButtonColumn ] [
-          button [ Class (classes?button + " " + (if model.operation = Add then classes?equalsButton else ""))
+          button [ Class (classes?button + " " + (if model.currentOperation = Add then classes?equalsButton else ""))
                    OnClick (fun _ -> dispatch AddMsg) ]
                    [ parseOperation Add |> str ]
-          button [ Class (classes?button + " " + (if model.operation = Subtract then classes?equalsButton else ""))
+          button [ Class (classes?button + " " + (if model.currentOperation = Subtract then classes?equalsButton else ""))
                    OnClick (fun _ -> dispatch SubstractMsg) ]
                    [ parseOperation Subtract |> str ]
-          button [ Class (classes?button + " " + (if model.operation = Multiply then classes?equalsButton else ""))
+          button [ Class (classes?button + " " + (if model.currentOperation = Multiply then classes?equalsButton else ""))
                    OnClick (fun _ -> dispatch MultiplyMsg) ]
                    [ parseOperation Multiply |> str ]
-          button [ Class (classes?button + " " + (if model.operation = Divide then classes?equalsButton else ""))
+          button [ Class (classes?button + " " + (if model.currentOperation = Divide then classes?equalsButton else ""))
                    OnClick (fun _ -> dispatch DivideMsg) ]
                    [ parseOperation Divide |> str ]
           button [ Class (classes?button + " " + classes?equalsButton)
@@ -207,10 +169,10 @@ let viewDefinition (classes: IClasses) model dispatch =
         ]
         div [ Class classes?operationButtonColumn ] [
           button [ Class classes?button
-                   OnClick (fun _ -> (ReplaceInputMsg (string Math.PI) |> dispatch)) ]
+                   OnClick (fun _ -> (ReplaceInputMsg ([string Math.PI]) |> dispatch)) ]
                    [ str "π" ]
           button [ Class classes?button
-                   OnClick (fun _ -> (ReplaceInputMsg (string Math.E) |> dispatch)) ]
+                   OnClick (fun _ -> (ReplaceInputMsg ([string Math.E]) |> dispatch)) ]
                    [ str "e" ]
           button [ Class classes?button
                    OnClick (fun _ -> (dispatch OpenParenthesisMsg)) ]

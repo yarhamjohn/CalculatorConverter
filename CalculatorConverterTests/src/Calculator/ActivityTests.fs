@@ -5,7 +5,7 @@ open Xunit
 [<Theory>]
 [<InlineData("", "1", "1")>]
 let ``appendDigitToInput returns the digit when given an empty input`` (input: string, digit: string, expected: string) =
-  let actual = appendDigitToInput input digit
+  let actual = appendDigit input digit
   Assert.Equal(expected, actual)
 
 [<Theory>]
@@ -14,7 +14,7 @@ let ``appendDigitToInput returns the digit when given an empty input`` (input: s
 [<InlineData("0", "0", "0")>]
 [<InlineData("00", "0", "0")>]
 let ``appendDigitToInput returns the digit when given an input containing only 0`` (input: string, digit: string, expected: string) =
-  let actual = appendDigitToInput input digit
+  let actual = appendDigit input digit
   Assert.Equal(expected, actual)
 
 [<Theory>]
@@ -23,7 +23,7 @@ let ``appendDigitToInput returns the digit when given an input containing only 0
 [<InlineData("0.1", "1", "0.11")>]
 [<InlineData("1.1", "1", "1.11")>]
 let ``appendDigitToInput appends the digit when given an input without leading 0`` (input: string, digit: string, expected: string) =
-  let actual = appendDigitToInput input digit
+  let actual = appendDigit input digit
   Assert.Equal(expected, actual)
 
 [<Theory>]
@@ -32,20 +32,20 @@ let ``appendDigitToInput appends the digit when given an input without leading 0
 [<InlineData("00.1", "1", "0.11")>]
 [<InlineData("01.1", "1", "1.11")>]
 let ``appendDigitToInput appends the digit when given an input with leading 0`` (input: string, digit: string, expected: string) =
-  let actual = appendDigitToInput input digit
+  let actual = appendDigit input digit
   Assert.Equal(expected, actual)
 
 [<Theory>]
 [<InlineData("", "0.")>]
 let ``appendDecimalPointToInput returns the correct result when given an empty input`` (input: string, expected: string) =
-  let actual = appendDecimalPointToInput input
+  let actual = appendDecimalPoint input
   Assert.Equal(expected, actual)
 
 [<Theory>]
 [<InlineData("0", "0.")>]
 [<InlineData("1", "1.")>]
 let ``appendDecimalPointToInput appends a decimal point to an input with no decimal point`` (input: string, expected: string) =
-  let actual = appendDecimalPointToInput input
+  let actual = appendDecimalPoint input
   Assert.Equal(expected, actual)
 
 [<Theory>]
@@ -57,7 +57,7 @@ let ``appendDecimalPointToInput appends a decimal point to an input with no deci
 [<InlineData(".0", "0.0")>]
 [<InlineData(".1", "0.1")>]
 let ``appendDecimalPointToInput does not append a decimal pointn to an input with a decimal point`` (input: string, expected: string) =
-  let actual = appendDecimalPointToInput input
+  let actual = appendDecimalPoint input
   Assert.Equal(expected, actual)
 
 [<Theory>]
