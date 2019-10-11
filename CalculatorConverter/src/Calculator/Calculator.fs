@@ -1,3 +1,4 @@
+[<AutoOpen>]
 module Calculator
 
 open System
@@ -9,12 +10,21 @@ open Fable.MaterialUI
 open Fable.MaterialUI.Core
 open Fable.Core
 
+type Activity =
+  | Operation of Operation
+  | Calculate
+  | DigitInput
+  | DecimalPointInput
+  | OpenParenthesis
+  | CloseParenthesis
+  | NoActivity
+
 type Model =
   {
-    input: string list
-    lastActivity: Activity
-    currentOperation: Operation
+    input: string
     calculation: string list
+    lastActivity: Activity
+    calculationResult: float
   }
 
 type Msg =
@@ -22,89 +32,103 @@ type Msg =
   | AppendDecimalPointMsg
   | DeleteDigitMsg
   | AddMsg
-  | SubstractMsg
+  | SubtractMsg
   | MultiplyMsg
   | DivideMsg
   | EqualsMsg
   | ClearMsg
   | ClearEntryMsg
   | InvertSignMsg
-  | ReplaceInputMsg of string list
+  | ReplaceInputMsg of string
   | OpenParenthesisMsg
   | CloseParenthesisMsg
 
 let init () =
   {
-    input = ["0"]
-    lastActivity = NoActivity
-    currentOperation = NoOperation
+    input = "0"
     calculation = []
+    lastActivity = NoActivity
+    calculationResult = 0.0
   }
 
-let inputDigit (model: Model) (digit: string) =
-  let newInput = appendDigit model.input digit |> formatInput
-  { model with input = newInput; lastActivity = DigitInput }
+let appendDigit (model: Model) (digit: string) =
+  match model.lastActivity with
+  | DecimalPointInput -> {model with input = model.input + digit; lastActivity = DigitInput}
+  | DigitInput -> match model.input with
+                  | "0" -> {model with input = digit; lastActivity = DigitInput}
+                  | _ -> {model with input = model.input + digit; lastActivity = DigitInput}
+  | _ -> {model with input = digit; lastActivity = DigitInput}
 
-let inputDecimalPoint (model: Model) =
-  let newInput = appendDecimalPoint model.input |> formatInput
-  { model with input = newInput; lastActivity = DecimalPointInput }
+let appendDecimalPoint (model: Model) =
+  match model.lastActivity with
+  | NoActivity -> {model with input = model.input + "."; lastActivity = DecimalPointInput}
+  | DecimalPointInput -> model
+  | DigitInput -> if model.input.Contains "."
+                  then model
+                  else {model with input = model.input + "."; lastActivity = DecimalPointInput}
+  | _ -> {model with input = "0."; lastActivity = DecimalPointInput}
 
-let openParenthesis (model: Model) =
-  let newCalculation =
-    if model.calculation.Length > 0 && getLastElement model.calculation = ")"
-    then deleteLastPartialCalculation model.calculation
-    else List.append model.calculation ["("]
+let deleteLastElement (model: Model) =
+  match model.input.Length with
+  | 1 -> {model with input = "0"; lastActivity = DigitInput}
+  | _ -> {model with input = model.input.Substring(0, model.input.Length - 1); lastActivity = DigitInput}
 
-  { model with lastActivity = OpenParenthesis; calculation = newCalculation }
+let clearEntry (model: Model) =
+  {model with input = "0"; lastActivity = NoActivity}
 
-//TODO: Need to calculate the appropriate input...
-let closeParenthesis (model: Model) =
-  if allParenthesesAreClosed model.calculation
-  then model
-  else { model with lastActivity = CloseParenthesis; calculation = List.concat [model.calculation; model.input; [")"; " "]] }
+let invertSign (model: Model) =
+  match model.input with
+  | "0" -> model
+  | _ when model.input.Contains "-" -> {model with input = model.input.Substring(1, model.input.Length - 1); lastActivity = DigitInput}
+  | _ -> {model with input = "-" + model.input; lastActivity = DigitInput }
 
+let replaceInput (model: Model) (replacementValue: string) =
+  {model with input = replacementValue; lastActivity = DigitInput}
+
+//TODO performOperation - should calculate partial results, taking into account precedence of(i.e. 2 + 3 - shows 5, but 2 + 3 x shows 3 in input)
 let performOperation (model: Model) (operation: Operation) =
-  let newCalculation =
-    match model.lastActivity with
-    | Operation -> replaceLastOperation model.calculation operation
-    | CloseParenthesis -> appendOperation model.calculation operation
-    | _ -> appendInput model.calculation model.input
-           |> appendOperation <| operation
+  match model.lastActivity with
+  | DecimalPointInput -> {model with input = (deleteLastElement model).input; calculation = List.append model.calculation [(deleteLastElement model).input; parseOperation operation]; lastActivity = Operation operation}
+  | DigitInput | NoActivity -> {model with calculation = List.append model.calculation [model.input; parseOperation operation]; lastActivity = Operation operation}
+  | Operation op when operation = op -> model
+  | _ -> {model with calculation = List.append model.calculation.[0..(model.calculation.Length - 2)] [parseOperation operation]; lastActivity = Operation operation}
 
-  let newInput = if model.lastActivity = Operation
-                 then model.input
-                 else calculate model.calculation
-
-  {model with
-    input = newInput;
-    lastActivity = Operation;
-    currentOperation = operation;
-    calculation = newCalculation}
+//TODO evaluateCalculation - this doesn't work for longer calculations. It also assumes the calculation is valid
+let evaluateCalculation (calculation: string list) =
+  match List.length calculation with
+  | 0 -> 0.0
+  | 1 | 2 -> float calculation.[0]
+  | _ ->
+    match getOperation calculation.[1] with
+    | Add -> float calculation.[0] + float calculation.[2]
+    | Subtract -> float calculation.[0] - float calculation.[2]
+    | Multiply -> float calculation.[0] * float calculation.[2]
+    | Divide -> float calculation.[0] / float calculation.[2]
+    | _ -> 0.0
 
 let calculateResult (model: Model) =
-  let finalCalculation = List.append model.calculation [serializeInput model.input]
-  {model with
-    input = calculate finalCalculation |> formatInput;
-    lastActivity = Calculate;
-    currentOperation = NoOperation;
-    calculation = []}
+  match model.lastActivity with
+  | DecimalPointInput -> {model with input = (deleteLastElement model).input; lastActivity = Calculate; calculationResult = float (deleteLastElement model).input }
+  | DigitInput ->  { model with input = string (evaluateCalculation (List.append model.calculation [model.input])); lastActivity = Calculate; calculation = []; calculationResult = evaluateCalculation (List.append model.calculation [model.input])}
+  | _ -> { model with input = string (evaluateCalculation (List.append model.calculation [model.input])); lastActivity = Calculate; calculation = []; calculationResult = evaluateCalculation (List.append model.calculation [model.input])}
 
+//TODO parentheses...
 let update (msg:Msg) (model: Model) =
     match msg with
-    | AppendDigitMsg digit -> inputDigit model digit
-    | AppendDecimalPointMsg -> inputDecimalPoint model
-    | DeleteDigitMsg -> { model with input = deleteLastElement model.input }
+    | AppendDigitMsg digit -> appendDigit model digit
+    | AppendDecimalPointMsg -> appendDecimalPoint model
+    | DeleteDigitMsg -> deleteLastElement model
     | AddMsg -> performOperation model Add
-    | SubstractMsg -> performOperation model Subtract
+    | SubtractMsg -> performOperation model Subtract
     | MultiplyMsg -> performOperation model Multiply
     | DivideMsg -> performOperation model Divide
     | EqualsMsg -> calculateResult model
     | ClearMsg -> init()
-    | ClearEntryMsg -> { model with input = ["0"] }
-    | InvertSignMsg -> { model with input = [string ((evaluateInput model.input) * -1.0)] }
-    | ReplaceInputMsg value -> { model with input = value }
-    | OpenParenthesisMsg -> openParenthesis model
-    | CloseParenthesisMsg -> closeParenthesis model
+    | ClearEntryMsg -> clearEntry model
+    | InvertSignMsg -> invertSign model
+    | ReplaceInputMsg value -> replaceInput model value
+//    | OpenParenthesisMsg -> openParenthesis model
+//    | CloseParenthesisMsg -> closeParenthesis model
 
 let digitPressed (key: string) =
   key = "0" || key = "1" || key = "2" || key = "3" || key = "4" || key = "5" || key = "6" || key = "7" || key = "8" || key = "9"
@@ -113,10 +137,10 @@ let viewDefinition (classes: IClasses) model dispatch =
   div [OnKeyPress (fun keyboardEvent -> if digitPressed keyboardEvent.key then keyboardEvent.key |> AppendDigitMsg |> dispatch)] [
     div [Class classes?display] [
       div [Class classes?calculation] [
-        span [] [ str (model.calculation |> List.fold (+) "") ]
+        span [] [ model.calculation |> List.fold (+) "" |> str ]
       ]
       div [Class classes?input] [
-        span [] [ serializeInput model.input |> str ]
+        span [] [ model.input |> str ]
       ]  
     ]
     div [ Class classes?calculator ] [
@@ -151,16 +175,16 @@ let viewDefinition (classes: IClasses) model dispatch =
       ]
       div [ Class classes?operations ] [
         div [ Class classes?operationButtonColumn ] [
-          button [ Class (classes?button + " " + (if model.currentOperation = Add then classes?equalsButton else ""))
+          button [ Class (classes?button + " " + (if model.lastActivity = Operation Add then classes?equalsButton else ""))
                    OnClick (fun _ -> dispatch AddMsg) ]
                    [ parseOperation Add |> str ]
-          button [ Class (classes?button + " " + (if model.currentOperation = Subtract then classes?equalsButton else ""))
-                   OnClick (fun _ -> dispatch SubstractMsg) ]
+          button [ Class (classes?button + " " + (if model.lastActivity = Operation Subtract then classes?equalsButton else ""))
+                   OnClick (fun _ -> dispatch SubtractMsg) ]
                    [ parseOperation Subtract |> str ]
-          button [ Class (classes?button + " " + (if model.currentOperation = Multiply then classes?equalsButton else ""))
+          button [ Class (classes?button + " " + (if model.lastActivity = Operation Multiply then classes?equalsButton else ""))
                    OnClick (fun _ -> dispatch MultiplyMsg) ]
                    [ parseOperation Multiply |> str ]
-          button [ Class (classes?button + " " + (if model.currentOperation = Divide then classes?equalsButton else ""))
+          button [ Class (classes?button + " " + (if model.lastActivity = Operation Divide then classes?equalsButton else ""))
                    OnClick (fun _ -> dispatch DivideMsg) ]
                    [ parseOperation Divide |> str ]
           button [ Class (classes?button + " " + classes?equalsButton)
@@ -169,10 +193,10 @@ let viewDefinition (classes: IClasses) model dispatch =
         ]
         div [ Class classes?operationButtonColumn ] [
           button [ Class classes?button
-                   OnClick (fun _ -> (ReplaceInputMsg ([string Math.PI]) |> dispatch)) ]
+                   OnClick (fun _ -> (ReplaceInputMsg (string Math.PI) |> dispatch)) ]
                    [ str "π" ]
           button [ Class classes?button
-                   OnClick (fun _ -> (ReplaceInputMsg ([string Math.E]) |> dispatch)) ]
+                   OnClick (fun _ -> (ReplaceInputMsg (string Math.E) |> dispatch)) ]
                    [ str "e" ]
           button [ Class classes?button
                    OnClick (fun _ -> (dispatch OpenParenthesisMsg)) ]

@@ -26,7 +26,6 @@ type Msg =
     | CalculatorMsg of Calculator.Msg
     | ConverterMsg of Converter.Msg
 
-
 let init () =
   let model =
     {

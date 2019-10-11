@@ -7,7 +7,7 @@ type Operation =
   | Multiply
   | Divide
   | NoOperation
-  
+
 let parseOperation = function
   | Add -> "+"
   | Subtract -> "-"
@@ -22,18 +22,7 @@ let getOperation = function
   | "/" -> Divide
   | _ -> NoOperation
 
-let private add (leftSide: float) (rightSide: float) =
-  leftSide + rightSide
-  
-let private subtract (leftSide: float) (rightSide: float) =
-  leftSide - rightSide
-
-let private multiply (leftSide: float) (rightSide: float) =
-  leftSide * rightSide
-  
-let private divide (leftSide: float) (rightSide: float) =
-  leftSide / rightSide
-
-//TODO: complete this method...
-let calculate (calculation: string list) =
-  []
+let getPrecedentOperator (first: Operation) (second: Operation) =
+  match first with
+  | Multiply | Divide -> first
+  | _ -> match second with | Multiply | Divide -> second | _ -> first

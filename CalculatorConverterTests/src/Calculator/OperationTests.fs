@@ -1,129 +1,45 @@
-module OperationTests
+module CalculatorConverterTests.Calculator.OperationTests
 
-open FSharp.Reflection
 open Xunit
 
-type TestData() =
-  static member ParseOperationTestData =
-    [ (Add, "+")
-      (Subtract, "-") 
-      (Multiply, "*") 
-      (Divide, "/") 
-      (NoOperation, "") 
-    ] |> Seq.map FSharpValue.GetTupleFields
+[<Fact>]
+let ``parseOperation returns the correct result`` () =
+    Assert.Equal(parseOperation Add, "+")
+    Assert.Equal(parseOperation Subtract, "-")
+    Assert.Equal(parseOperation Multiply, "*")
+    Assert.Equal(parseOperation Divide, "/")
 
-[<Theory>]
-[<MemberData("ParseOperationTestData", MemberType=typeof<TestData>)>]
-let ``parseOperation returns correct symbol`` (operation: Operation, expected: string) =
-    let actual = parseOperation operation 
-    Assert.Equal(expected, actual)
+[<Fact>]
+let ``getOperation returns the correct result`` () =
+    Assert.Equal(getOperation "+", Add)
+    Assert.Equal(getOperation "-", Subtract)
+    Assert.Equal(getOperation "*", Multiply)
+    Assert.Equal(getOperation "/", Divide)
 
-[<Theory>]
-[<InlineData("0", "0", "0")>]
-[<InlineData("1", "0", "1")>]
-[<InlineData("0", "1", "1")>]
-[<InlineData("-1", "0", "-1")>]
-[<InlineData("0", "-1", "-1")>]
-[<InlineData("1", "1", "2")>]
-[<InlineData("1", "-1", "0")>]
-[<InlineData("-1", "1", "0")>]
-[<InlineData("-1", "-1", "-2")>]
-[<InlineData("2", "3", "5")>]
-[<InlineData("2", "-3", "-1")>]
-[<InlineData("-2", "3", "1")>]
-[<InlineData("-2", "-3", "-5")>]
-[<InlineData("3", "2", "5")>]
-[<InlineData("3", "-2", "1")>]
-[<InlineData("-3", "2", "-1")>]
-[<InlineData("-3", "-2", "-5")>]
-let ``calculate correctly adds two numbers`` (stored: string, input: string, expected: string) =
-    let actual = calculate stored input Add
-    Assert.Equal(expected, actual)
-        
-[<Theory>]
-[<InlineData("0", "0", "0")>]
-[<InlineData("1", "0", "1")>]
-[<InlineData("0", "1", "-1")>]
-[<InlineData("-1", "0", "-1")>]
-[<InlineData("0", "-1", "1")>]
-[<InlineData("1", "1", "0")>]
-[<InlineData("1", "-1", "2")>]
-[<InlineData("-1", "1", "-2")>]
-[<InlineData("-1", "-1", "0")>]
-[<InlineData("2", "3", "-1")>]
-[<InlineData("2", "-3", "5")>]
-[<InlineData("-2", "3", "-5")>]
-[<InlineData("-2", "-3", "1")>]
-[<InlineData("3", "2", "1")>]
-[<InlineData("3", "-2", "5")>]
-[<InlineData("-3", "2", "-5")>]
-[<InlineData("-3", "-2", "-1")>]
-let ``calculate correctly subtracts two numbers`` (stored: string, input: string, expected: string) =
-    let actual = calculate stored input Subtract
-    Assert.Equal(expected, actual)
-    
-[<Theory>]
-[<InlineData("0", "0", "0")>]
-[<InlineData("1", "0", "0")>]
-[<InlineData("0", "1", "0")>]
-[<InlineData("-1", "0", "0")>]
-[<InlineData("0", "-1", "0")>]
-[<InlineData("1", "1", "1")>]
-[<InlineData("1", "-1", "-1")>]
-[<InlineData("-1", "1", "-1")>]
-[<InlineData("-1", "-1", "1")>]
-[<InlineData("2", "3", "6")>]
-[<InlineData("2", "-3", "-6")>]
-[<InlineData("-2", "3", "-6")>]
-[<InlineData("-2", "-3", "6")>]
-[<InlineData("3", "2", "6")>]
-[<InlineData("3", "-2", "-6")>]
-[<InlineData("-3", "2", "-6")>]
-[<InlineData("-3", "-2", "6")>]
-let ``calculate correctly multiplies two numbers`` (stored: string, input: string, expected: string) =
-    let actual = calculate stored input Multiply
-    Assert.Equal(expected, actual)
-    
-[<Theory>]
-[<InlineData("0", "0", "NaN")>]
-[<InlineData("1", "0", "Infinity")>]
-[<InlineData("0", "1", "0")>]
-[<InlineData("-1", "0", "-Infinity")>]
-[<InlineData("0", "-1", "0")>]
-[<InlineData("1", "1", "1")>]
-[<InlineData("1", "-1", "-1")>]
-[<InlineData("-1", "1", "-1")>]
-[<InlineData("-1", "-1", "1")>]
-[<InlineData("2", "3", "0.666666666666667")>]
-[<InlineData("2", "-3", "-0.666666666666667")>]
-[<InlineData("-2", "3", "-0.666666666666667")>]
-[<InlineData("-2", "-3", "0.666666666666667")>]
-[<InlineData("3", "2", "1.5")>]
-[<InlineData("3", "-2", "-1.5")>]
-[<InlineData("-3", "2", "-1.5")>]
-[<InlineData("-3", "-2", "1.5")>]
-let ``calculate correctly divides two numbers`` (stored: string, input: string, expected: string) =
-    let actual = calculate stored input Divide
-    Assert.Equal(expected, actual)
-    
-[<Theory>]
-[<InlineData("0", "0", "0")>]
-[<InlineData("1", "0", "0")>]
-[<InlineData("0", "1", "1")>]
-[<InlineData("-1", "0", "0")>]
-[<InlineData("0", "-1", "-1")>]
-[<InlineData("1", "1", "1")>]
-[<InlineData("1", "-1", "-1")>]
-[<InlineData("-1", "1", "1")>]
-[<InlineData("-1", "-1", "-1")>]
-[<InlineData("2", "3", "3")>]
-[<InlineData("2", "-3", "-3")>]
-[<InlineData("-2", "3", "3")>]
-[<InlineData("-2", "-3", "-3")>]
-[<InlineData("3", "2", "2")>]
-[<InlineData("3", "-2", "-2")>]
-[<InlineData("-3", "2", "2")>]
-[<InlineData("-3", "-2", "-2")>]
-let ``calculate returns the input given no operation`` (stored: string, input: string, expected: string) =
-    let actual = calculate stored input NoOperation
-    Assert.Equal(expected, actual)
+[<Fact>]
+let ``Add never takes precedence`` () =
+    Assert.Equal(Add, getPrecedentOperator Add Add)
+    Assert.Equal(Add, getPrecedentOperator Add Subtract)
+    Assert.Equal(Multiply, getPrecedentOperator Add Multiply)
+    Assert.Equal(Divide, getPrecedentOperator Add Divide)
+
+[<Fact>]
+let ``Subtract never takes precedence`` () =
+    Assert.Equal(Subtract, getPrecedentOperator Subtract Add)
+    Assert.Equal(Subtract, getPrecedentOperator Subtract Subtract)
+    Assert.Equal(Multiply, getPrecedentOperator Subtract Multiply)
+    Assert.Equal(Divide, getPrecedentOperator Subtract Divide)
+
+[<Fact>]
+let ``Multiply takes precedence over Add and Subtract`` () =
+    Assert.Equal(Multiply, getPrecedentOperator Multiply Add)
+    Assert.Equal(Multiply, getPrecedentOperator Multiply Subtract)
+    Assert.Equal(Multiply, getPrecedentOperator Multiply Multiply)
+    Assert.Equal(Multiply, getPrecedentOperator Multiply Divide)
+
+[<Fact>]
+let ``Divide takes precedence over Add and Subtract`` () =
+    Assert.Equal(Divide, getPrecedentOperator Divide Add)
+    Assert.Equal(Divide, getPrecedentOperator Divide Subtract)
+    Assert.Equal(Divide, getPrecedentOperator Divide Multiply)
+    Assert.Equal(Divide, getPrecedentOperator Divide Divide)

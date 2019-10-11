@@ -18,8 +18,15 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Include="src\Calculator\ActivityTests.fs" />
+      <Compile Include="src\Calculator\AppendDecimalPointTests.fs" />
+      <Compile Include="src\Calculator\DeleteLastElementTests.fs" />
+      <Compile Include="src\Calculator\ClearEntryTests.fs" />
+      <Compile Include="src\Calculator\PerformOperationTests.fs" />
+      <Compile Include="src\Calculator\ReplaceInputTests.fs" />
+      <Compile Include="src\Calculator\InvertSignTests.fs" />
+      <Compile Include="src\Calculator\AppendDigitTests.fs" />
       <Compile Include="src\Calculator\OperationTests.fs" />
+      <Compile Include="src\Calculator\calculateResultTests.fs" />
     </ItemGroup>
 
 </Project>
