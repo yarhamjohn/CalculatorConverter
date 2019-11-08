@@ -40,5 +40,21 @@ let ``calculate result updates calculation and calculation result if last input 
   let expectedModel = {input = "5"; calculation = []; lastActivity = Calculate; calculationResult = Some 5.0}
   assertModelIsCorrect expectedModel actualModel
 
+[<Fact>]
+let ``calculate result updates calculation and calculation result if last input was a DigitInput for a multi-part calculation`` () =
+  let model = {input = "3"; calculation = ["1"; "+"; "2"; "+"]; lastActivity = DigitInput; calculationResult = None}
+
+  let actualModel = calculateResult model
+  let expectedModel = {input = "6"; calculation = []; lastActivity = Calculate; calculationResult = Some 6.0}
+  assertModelIsCorrect expectedModel actualModel
+
+[<Fact>]
+let ``calculate result takes precedence into account`` () =
+  let model = {input = "3"; calculation = ["1"; "+"; "2"; "*"]; lastActivity = DigitInput; calculationResult = None}
+
+  let actualModel = calculateResult model
+  let expectedModel = {input = "7"; calculation = []; lastActivity = Calculate; calculationResult = Some 7.0}
+  assertModelIsCorrect expectedModel actualModel
+
 
 

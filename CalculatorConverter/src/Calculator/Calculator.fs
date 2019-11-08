@@ -25,7 +25,7 @@ type Model =
     input: string
     calculation: string list
     lastActivity: Activity
-    calculationResult: Option<float> //TODO: Is this needed? It isn't used yet...
+    calculationResult: Option<float>
   }
 
 type Msg =
@@ -98,18 +98,34 @@ let performOperation (model: Model) (operation: Operation) =
   | Calculate | InvertSign -> { model with lastActivity = Operation operation; calculation = [model.input; parseOperation operation]; calculationResult = None }
   | _ -> {model with calculation = List.append model.calculation.[0..(model.calculation.Length - 2)] [parseOperation operation]; lastActivity = Operation operation}
 
-//TODO evaluateCalculation - this doesn't work for longer calculations. It also assumes the calculation is valid. Takes no account of precedence and obvs no parentheses atm
+exception CalculationError of string
+
+//TODO evaluateCalculation - Takes no account of precedence and obvs no parentheses atm
 let evaluateCalculation (calculation: string list) =
-  match List.length calculation with
-  | 0 -> 0.0
-  | 1 | 2 -> float calculation.[0]
-  | _ ->
-    match getOperation calculation.[1] with
-    | Add -> float calculation.[0] + float calculation.[2]
-    | Subtract -> float calculation.[0] - float calculation.[2]
-    | Multiply -> float calculation.[0] * float calculation.[2]
-    | Divide -> float calculation.[0] / float calculation.[2]
-    | _ -> 0.0
+  let numElements = List.length calculation
+  let mutable newCalculation = match getOperation calculation.[numElements - 1] with | NoOperation -> calculation | _ -> calculation.[..(numElements - 1)]
+
+  if List.length newCalculation % 2 <> 1
+  then raise(CalculationError("Unexpected number of elements in the calculation: " + (newCalculation |> List.fold (+) "")))
+  else
+    match numElements with
+    | 0 -> 0.0
+    | 1 -> float newCalculation.[0]
+    | _ ->
+      let mutable numOperations = (numElements - 1) / 2
+      while numOperations > 0 do
+        let calc = newCalculation.[0..2]
+        let result = match getOperation calc.[1] with
+                     | Add -> float calc.[0] + float calc.[2]
+                     | Subtract -> float calc.[0] - float calc.[2]
+                     | Multiply -> float calc.[0] * float calc.[2]
+                     | Divide -> float calc.[0] / float calc.[2]
+                     | _ -> 0.0
+
+        if List.length newCalculation = 3 then newCalculation <- [string result] else newCalculation <- List.append [string result] newCalculation.[3..]
+        numOperations <- numOperations - 1
+      float newCalculation.[0]
+
 
 let calculateResult (model: Model) =
   match model.lastActivity with
