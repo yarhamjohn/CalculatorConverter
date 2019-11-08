@@ -95,10 +95,10 @@ let performOperation (model: Model) (operation: Operation) =
   | DecimalPointInput -> {model with input = (deleteLastElement model).input; calculation = List.append model.calculation [(deleteLastElement model).input; parseOperation operation]; lastActivity = Operation operation}
   | DigitInput | NoActivity -> {model with calculation = List.append model.calculation [model.input; parseOperation operation]; lastActivity = Operation operation}
   | Operation op when operation = op -> model
-  | Calculate -> { model with lastActivity = Operation operation; calculation = [model.input; parseOperation operation]; calculationResult = None }
+  | Calculate | InvertSign -> { model with lastActivity = Operation operation; calculation = [model.input; parseOperation operation]; calculationResult = None }
   | _ -> {model with calculation = List.append model.calculation.[0..(model.calculation.Length - 2)] [parseOperation operation]; lastActivity = Operation operation}
 
-//TODO evaluateCalculation - this doesn't work for longer calculations. It also assumes the calculation is valid
+//TODO evaluateCalculation - this doesn't work for longer calculations. It also assumes the calculation is valid. Takes no account of precedence and obvs no parentheses atm
 let evaluateCalculation (calculation: string list) =
   match List.length calculation with
   | 0 -> 0.0

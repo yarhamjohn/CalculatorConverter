@@ -55,3 +55,11 @@ let ``performOperation updates the calculation when the last activity was Calcul
   let actualModel = performOperation model Add
   let expectedModel = {input = "1"; calculation = ["1"; "+"]; lastActivity = Operation Add; calculationResult = None}
   assertModelIsCorrect expectedModel actualModel
+
+[<Fact>]
+let ``performOperation updates the calculation when the last activity was InvertSign`` () =
+  let model = {input = "-1"; calculation = []; lastActivity = InvertSign; calculationResult = None}
+
+  let actualModel = performOperation model Add
+  let expectedModel = {input = "-1"; calculation = ["-1"; "+"]; lastActivity = Operation Add; calculationResult = None}
+  assertModelIsCorrect expectedModel actualModel
