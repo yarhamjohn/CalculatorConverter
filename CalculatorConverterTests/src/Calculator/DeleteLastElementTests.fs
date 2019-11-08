@@ -10,24 +10,24 @@ let assertModelIsCorrect (expectedModel: Model) (actualModel: Model) =
 
 [<Fact>]
 let ``deleteLastElement deletes a decimal point if it is the last element`` () =
-  let model = {input = "1."; calculation = []; lastActivity = DecimalPointInput; calculationResult = 0.0}
+  let model = {input = "1."; calculation = []; lastActivity = DecimalPointInput; calculationResult = None}
 
   let actualModel = deleteLastElement model
-  let expectedModel = {input = "1"; calculation = []; lastActivity = DigitInput; calculationResult = 0.0}
+  let expectedModel = {input = "1"; calculation = []; lastActivity = DigitInput; calculationResult = None}
   assertModelIsCorrect expectedModel actualModel
 
 [<Fact>]
 let ``deleteLastElement deletes the last digit if there is more than 1`` () =
-  let model = {input = "12"; calculation = []; lastActivity = DigitInput; calculationResult = 0.0}
+  let model = {input = "12"; calculation = []; lastActivity = DigitInput; calculationResult = None}
 
   let actualModel = deleteLastElement model
-  let expectedModel = {input = "1"; calculation = []; lastActivity = DigitInput; calculationResult = 0.0}
+  let expectedModel = {input = "1"; calculation = []; lastActivity = DigitInput; calculationResult = None}
   assertModelIsCorrect expectedModel actualModel
 
 [<Fact>]
 let ``deleteLastElement sets input to 0 if deleting the only element`` () =
-  let model = {input = "1"; calculation = []; lastActivity = DigitInput; calculationResult = 0.0}
+  let model = {input = "1"; calculation = []; lastActivity = DigitInput; calculationResult = None}
 
   let actualModel = deleteLastElement model
-  let expectedModel = {input = "0"; calculation = []; lastActivity = DigitInput; calculationResult = 0.0}
+  let expectedModel = {input = "0"; calculation = []; lastActivity = DigitInput; calculationResult = None}
   assertModelIsCorrect expectedModel actualModel

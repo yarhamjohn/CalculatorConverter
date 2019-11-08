@@ -10,9 +10,9 @@ let assertModelIsCorrect (expectedModel: Model) (actualModel: Model) =
 
 [<Fact>]
 let ``replaceInput replaces the input with the given value`` () =
-  let model = {input = "1"; calculation = []; lastActivity = DigitInput; calculationResult = 0.0}
+  let model = {input = "1"; calculation = []; lastActivity = DigitInput; calculationResult = None}
   let newValue = "123"
 
   let actualModel = replaceInput model newValue
-  let expectedModel = {input = newValue; calculation = []; lastActivity = DigitInput; calculationResult = 0.0}
+  let expectedModel = {input = newValue; calculation = []; lastActivity = DigitInput; calculationResult = None}
   assertModelIsCorrect expectedModel actualModel

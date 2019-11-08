@@ -10,40 +10,48 @@ let assertModelIsCorrect (expectedModel: Model) (actualModel: Model) =
 
 [<Fact>]
 let ``performOperation does nothing if last activity was the same operation`` () =
-  let model = {input = "1"; calculation = ["1"; "+"]; lastActivity = Operation Add; calculationResult = 0.0}
+  let model = {input = "1"; calculation = ["1"; "+"]; lastActivity = Operation Add; calculationResult = None}
 
   let actualModel = performOperation model Add
-  let expectedModel = {input = "1"; calculation = ["1"; "+"]; lastActivity = Operation Add; calculationResult = 0.0}
+  let expectedModel = {input = "1"; calculation = ["1"; "+"]; lastActivity = Operation Add; calculationResult = None}
   assertModelIsCorrect expectedModel actualModel
 
 [<Fact>]
 let ``performOperation replaces the last operation if the last activity was a different operation`` () =
-  let model = {input = "1"; calculation = ["1"; "+"]; lastActivity = Operation Add; calculationResult = 0.0}
+  let model = {input = "1"; calculation = ["1"; "+"]; lastActivity = Operation Add; calculationResult = None}
 
   let actualModel = performOperation model Subtract
-  let expectedModel = {input = "1"; calculation = ["1"; "-"]; lastActivity = Operation Subtract; calculationResult = 0.0}
+  let expectedModel = {input = "1"; calculation = ["1"; "-"]; lastActivity = Operation Subtract; calculationResult = None}
   assertModelIsCorrect expectedModel actualModel
 
 [<Fact>]
 let ``performOperation updates the calculation given no previous activity`` () =
-  let model = {input = "0"; calculation = []; lastActivity = NoActivity; calculationResult = 0.0}
+  let model = {input = "0"; calculation = []; lastActivity = NoActivity; calculationResult = None}
 
   let actualModel = performOperation model Add
-  let expectedModel = {input = "0"; calculation = ["0"; "+"]; lastActivity = Operation Add; calculationResult = 0.0}
+  let expectedModel = {input = "0"; calculation = ["0"; "+"]; lastActivity = Operation Add; calculationResult = None}
   assertModelIsCorrect expectedModel actualModel
 
 [<Fact>]
 let ``performOperation updates the calculation and input when the last activity was DecimalPointInput`` () =
-  let model = {input = "1."; calculation = []; lastActivity = DecimalPointInput; calculationResult = 0.0}
+  let model = {input = "1."; calculation = []; lastActivity = DecimalPointInput; calculationResult = None}
 
   let actualModel = performOperation model Add
-  let expectedModel = {input = "1"; calculation = ["1"; "+"]; lastActivity = Operation Add; calculationResult = 0.0}
+  let expectedModel = {input = "1"; calculation = ["1"; "+"]; lastActivity = Operation Add; calculationResult = None}
   assertModelIsCorrect expectedModel actualModel
 
 [<Fact>]
 let ``performOperation updates the calculation when the last activity was DigitInput`` () =
-  let model = {input = "1"; calculation = []; lastActivity = DigitInput; calculationResult = 0.0}
+  let model = {input = "1"; calculation = []; lastActivity = DigitInput; calculationResult = None}
 
   let actualModel = performOperation model Add
-  let expectedModel = {input = "1"; calculation = ["1"; "+"]; lastActivity = Operation Add; calculationResult = 0.0}
+  let expectedModel = {input = "1"; calculation = ["1"; "+"]; lastActivity = Operation Add; calculationResult = None}
+  assertModelIsCorrect expectedModel actualModel
+
+[<Fact>]
+let ``performOperation updates the calculation when the last activity was Calculate`` () =
+  let model = {input = "1"; calculation = []; lastActivity = Calculate; calculationResult = Some 1.0}
+
+  let actualModel = performOperation model Add
+  let expectedModel = {input = "1"; calculation = ["1"; "+"]; lastActivity = Operation Add; calculationResult = None}
   assertModelIsCorrect expectedModel actualModel

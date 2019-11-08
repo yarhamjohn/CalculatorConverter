@@ -17,6 +17,7 @@ type Activity =
   | DecimalPointInput
   | OpenParenthesis
   | CloseParenthesis
+  | InvertSign
   | NoActivity
 
 type Model =
@@ -24,7 +25,7 @@ type Model =
     input: string
     calculation: string list
     lastActivity: Activity
-    calculationResult: float
+    calculationResult: Option<float> //TODO: Is this needed? It isn't used yet...
   }
 
 type Msg =
@@ -48,7 +49,7 @@ let init () =
     input = "0"
     calculation = []
     lastActivity = NoActivity
-    calculationResult = 0.0
+    calculationResult = None
   }
 
 let appendDigit (model: Model) (digit: string) =
@@ -57,7 +58,10 @@ let appendDigit (model: Model) (digit: string) =
   | DigitInput -> match model.input with
                   | "0" -> {model with input = digit; lastActivity = DigitInput}
                   | _ -> {model with input = model.input + digit; lastActivity = DigitInput}
-  | _ -> {model with input = digit; lastActivity = DigitInput}
+  | InvertSign -> match model.calculationResult with
+                  | None -> { model with input = model.input + digit; lastActivity = DigitInput}
+                  | _ -> { model with input = digit; lastActivity = DigitInput; calculationResult = None}
+  | _ -> {model with input = digit; lastActivity = DigitInput; calculationResult = None}
 
 let appendDecimalPoint (model: Model) =
   match model.lastActivity with
@@ -78,9 +82,9 @@ let clearEntry (model: Model) =
 
 let invertSign (model: Model) =
   match model.input with
-  | "0" -> model
-  | _ when model.input.Contains "-" -> {model with input = model.input.Substring(1, model.input.Length - 1); lastActivity = DigitInput}
-  | _ -> {model with input = "-" + model.input; lastActivity = DigitInput }
+  | "0" -> { model with lastActivity = InvertSign }
+  | _ when model.input.Contains "-" -> {model with input = model.input.Substring(1, model.input.Length - 1); lastActivity = InvertSign}
+  | _ -> {model with input = "-" + model.input; lastActivity = InvertSign }
 
 let replaceInput (model: Model) (replacementValue: string) =
   {model with input = replacementValue; lastActivity = DigitInput}
@@ -91,6 +95,7 @@ let performOperation (model: Model) (operation: Operation) =
   | DecimalPointInput -> {model with input = (deleteLastElement model).input; calculation = List.append model.calculation [(deleteLastElement model).input; parseOperation operation]; lastActivity = Operation operation}
   | DigitInput | NoActivity -> {model with calculation = List.append model.calculation [model.input; parseOperation operation]; lastActivity = Operation operation}
   | Operation op when operation = op -> model
+  | Calculate -> { model with lastActivity = Operation operation; calculation = [model.input; parseOperation operation]; calculationResult = None }
   | _ -> {model with calculation = List.append model.calculation.[0..(model.calculation.Length - 2)] [parseOperation operation]; lastActivity = Operation operation}
 
 //TODO evaluateCalculation - this doesn't work for longer calculations. It also assumes the calculation is valid
@@ -108,9 +113,9 @@ let evaluateCalculation (calculation: string list) =
 
 let calculateResult (model: Model) =
   match model.lastActivity with
-  | DecimalPointInput -> {model with input = (deleteLastElement model).input; lastActivity = Calculate; calculationResult = float (deleteLastElement model).input }
-  | DigitInput ->  { model with input = string (evaluateCalculation (List.append model.calculation [model.input])); lastActivity = Calculate; calculation = []; calculationResult = evaluateCalculation (List.append model.calculation [model.input])}
-  | _ -> { model with input = string (evaluateCalculation (List.append model.calculation [model.input])); lastActivity = Calculate; calculation = []; calculationResult = evaluateCalculation (List.append model.calculation [model.input])}
+  | DecimalPointInput -> {model with input = (deleteLastElement model).input; lastActivity = Calculate; calculationResult = Some (float (deleteLastElement model).input) }
+  | DigitInput ->  { model with input = string (evaluateCalculation (List.append model.calculation [model.input])); lastActivity = Calculate; calculation = []; calculationResult = Some (evaluateCalculation (List.append model.calculation [model.input]))}
+  | _ -> { model with input = string (evaluateCalculation (List.append model.calculation [model.input])); lastActivity = Calculate; calculation = []; calculationResult = Some (evaluateCalculation (List.append model.calculation [model.input]))}
 
 //TODO parentheses...
 let update (msg:Msg) (model: Model) =

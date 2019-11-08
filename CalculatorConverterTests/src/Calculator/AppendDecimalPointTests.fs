@@ -22,42 +22,42 @@ let assertModelIsCorrect (expectedModel: Model) (actualModel: Model) =
 
 [<Fact>]
 let ``appendDecimalPoint after DecimalPointInput does not append a decimal point`` () =
-  let model = {input = "0."; calculation = []; lastActivity = DecimalPointInput; calculationResult = 0.0}
+  let model = {input = "0."; calculation = []; lastActivity = DecimalPointInput; calculationResult = None}
 
   let actualModel = appendDecimalPoint model
-  let expectedModel = {input = "0."; calculation = []; lastActivity = DecimalPointInput; calculationResult = 0.0}
+  let expectedModel = {input = "0."; calculation = []; lastActivity = DecimalPointInput; calculationResult = None}
   assertModelIsCorrect expectedModel actualModel
 
 [<Fact>]
 let ``appendDecimalPoint after DigitInput does not append a decimal point if a decimal point already exists`` () =
-  let model = {input = "0.0"; calculation = []; lastActivity = DigitInput; calculationResult = 0.0}
+  let model = {input = "0.0"; calculation = []; lastActivity = DigitInput; calculationResult = None}
 
   let actualModel = appendDecimalPoint model
-  let expectedModel = {input = "0.0"; calculation = []; lastActivity = DigitInput; calculationResult = 0.0}
+  let expectedModel = {input = "0.0"; calculation = []; lastActivity = DigitInput; calculationResult = None}
   assertModelIsCorrect expectedModel actualModel
 
 [<Fact>]
 let ``appendDecimalPoint after NoActivity appends a decimal point`` () =
-  let model = {input = "0"; calculation = []; lastActivity = NoActivity; calculationResult = 0.0}
+  let model = {input = "0"; calculation = []; lastActivity = NoActivity; calculationResult = None}
 
   let actualModel = appendDecimalPoint model
-  let expectedModel = {input = "0."; calculation = []; lastActivity = DecimalPointInput; calculationResult = 0.0}
+  let expectedModel = {input = "0."; calculation = []; lastActivity = DecimalPointInput; calculationResult = None}
   assertModelIsCorrect expectedModel actualModel
 
 [<Fact>]
 let ``appendDecimalPoint after DigitInput appends a decimal point if a decimal point does not already exist`` () =
-  let model = {input = "1"; calculation = []; lastActivity = DigitInput; calculationResult = 0.0}
+  let model = {input = "1"; calculation = []; lastActivity = DigitInput; calculationResult = None}
 
   let actualModel = appendDecimalPoint model
-  let expectedModel = {input = "1."; calculation = []; lastActivity = DecimalPointInput; calculationResult = 0.0}
+  let expectedModel = {input = "1."; calculation = []; lastActivity = DecimalPointInput; calculationResult = None}
   assertModelIsCorrect expectedModel actualModel
 
 [<Theory>]
 [<MemberData("ActivityTestData", MemberType=typeof<TestData>)>]
 let ``appendDecimalPoint after an activity other than DigitInput or DecimalPointInput replaces input with "0."`` (activity: Activity) =
-  let model = {input = "1"; calculation = []; lastActivity = activity; calculationResult = 0.0}
+  let model = {input = "1"; calculation = []; lastActivity = activity; calculationResult = None}
 
   let actualModel = appendDecimalPoint model
-  let expectedModel = {input = "0."; calculation = []; lastActivity = DecimalPointInput; calculationResult = 0.0}
+  let expectedModel = {input = "0."; calculation = []; lastActivity = DecimalPointInput; calculationResult = None}
   assertModelIsCorrect expectedModel actualModel
 
