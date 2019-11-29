@@ -54,7 +54,7 @@ let ``appendDecimalPoint after DigitInput appends a decimal point if a decimal p
 
 [<Theory>]
 [<MemberData("ActivityTestData", MemberType=typeof<TestData>)>]
-let ``appendDecimalPoint after an activity other than DigitInput or DecimalPointInput replaces input with "0."`` (activity: Activity) =
+let ``appendDecimalPoint after an activity other than DigitInput or DecimalPointInput replaces input`` (activity: Activity) =
   let model = {input = "1"; calculation = []; lastActivity = activity; calculationResult = None}
 
   let actualModel = appendDecimalPoint model

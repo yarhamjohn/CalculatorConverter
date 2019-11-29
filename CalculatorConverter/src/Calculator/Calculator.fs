@@ -89,17 +89,6 @@ let invertSign (model: Model) =
 let replaceInput (model: Model) (replacementValue: string) =
   {model with input = replacementValue; lastActivity = DigitInput}
 
-//TODO performOperation - should calculate partial results, taking into account precedence of(i.e. 2 + 3 - shows 5, but 2 + 3 x shows 3 in input)
-let performOperation (model: Model) (operation: Operation) =
-  match model.lastActivity with
-  | DecimalPointInput -> {model with input = (deleteLastElement model).input; calculation = List.append model.calculation [(deleteLastElement model).input; parseOperation operation]; lastActivity = Operation operation}
-  | DigitInput | NoActivity -> {model with calculation = List.append model.calculation [model.input; parseOperation operation]; lastActivity = Operation operation}
-  | Operation op when operation = op -> model
-  | Calculate | InvertSign -> { model with lastActivity = Operation operation; calculation = [model.input; parseOperation operation]; calculationResult = None }
-  | _ -> {model with calculation = List.append model.calculation.[0..(model.calculation.Length - 2)] [parseOperation operation]; lastActivity = Operation operation}
-
-exception CalculationError of string
-
 let calculatePartial (calc: string list) =
   match getOperation calc.[1] with
   | Add -> float calc.[0] + float calc.[2]
@@ -127,6 +116,8 @@ let evaluatePartialCalculation (calculation: string list) =
       then List.append calculation.[0..(operatorIndex - 2)] [string result]
       else List.concat [calculation.[0..(operatorIndex - 2)]; [string result]; calculation.[(operatorIndex + 2)..]]
 
+exception CalculationError of string
+
 //TODO evaluateCalculation - Takes no account of parentheses atm
 let evaluateCalculation (calculation: string list) =
   let numElements = List.length calculation
@@ -146,6 +137,46 @@ let evaluateCalculation (calculation: string list) =
         newCalculation <- evaluatePartialCalculation newCalculation
         numOperations <- numOperations - 1
       float newCalculation.[0]
+
+let getPartialResult (calculation: string list) (input: string) (operation: Operation) =
+  let operations = List.filter (fun elem -> getOperation elem <> NoOperation) calculation |> List.map (fun elem -> getOperation elem)
+  let singlePrecedenceLevel = (List.forall (fun elem -> elem = Add || elem = Subtract) operations) || (List.forall (fun elem -> elem = Multiply || elem = Divide) operations)
+  if calculation.Length < 3
+  then (input, None)
+  else if singlePrecedenceLevel || operation = Add || operation = Subtract
+  then
+    let partialCalculation = calculation.[..(calculation.Length - 2)]
+    (string (evaluateCalculation partialCalculation), Some (float (evaluateCalculation partialCalculation)))
+  else (input, None) //TODO: calculate the multiply/divide portion only - what happens if there are multiple sections? Seems to be the case that if two x or / in a row, do them together but still ignore  + or - until a new + or - is added
+
+//TODO performOperation - should calculate partial results, taking into account precedence of(i.e. 2 + 3 - shows 5, but 2 + 3 x shows 3 in input)
+let performOperation (model: Model) (operation: Operation) =
+  match model.lastActivity with
+  | DecimalPointInput -> {
+    model with input = (deleteLastElement model).input;
+               calculation = List.append model.calculation [(deleteLastElement model).input; parseOperation operation];
+               lastActivity = Operation operation
+    }
+  | NoActivity -> {
+    model with calculation = List.append model.calculation [model.input; parseOperation operation];
+               lastActivity = Operation operation
+    }
+  | DigitInput ->
+    let newCalculation = List.append model.calculation [model.input; parseOperation operation]
+    { model with input = fst(getPartialResult newCalculation model.input operation);
+                 calculation = newCalculation;
+                 lastActivity = Operation operation;
+                 calculationResult = snd (getPartialResult newCalculation model.input operation)}
+  | Operation op when operation = op -> model
+  | Calculate | InvertSign -> {
+    model with lastActivity = Operation operation;
+               calculation = [model.input; parseOperation operation];
+               calculationResult = None
+    }
+  | _ -> {
+    model with calculation = List.append model.calculation.[0..(model.calculation.Length - 2)] [parseOperation operation];
+               lastActivity = Operation operation
+    }
 
 let calculateResult (model: Model) =
   match model.lastActivity with
