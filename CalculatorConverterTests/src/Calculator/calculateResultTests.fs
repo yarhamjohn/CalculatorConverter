@@ -57,11 +57,27 @@ let ``calculate result updates calculation and calculation result if last input 
   assertModelIsCorrect expectedModel actualModel
 
 [<Fact>]
-let ``calculate result takes precedence into account`` () =
+let ``calculate result takes simple precedence into account`` () =
   let model = {input = "3"; calculation = ["1"; "+"; "2"; "*"]; lastActivity = DigitInput; calculationResult = None}
 
   let actualModel = calculateResult model
   let expectedModel = {input = "7"; calculation = []; lastActivity = Calculate; calculationResult = Some 7.0}
+  assertModelIsCorrect expectedModel actualModel
+
+[<Fact>]
+let ``calculate result takes multiple precedence into account with adjacent top level operators`` () =
+  let model = {input = "2"; calculation = ["1"; "+"; "2"; "*"; "3"; "/"]; lastActivity = DigitInput; calculationResult = None}
+
+  let actualModel = calculateResult model
+  let expectedModel = {input = "4"; calculation = []; lastActivity = Calculate; calculationResult = Some 4.0}
+  assertModelIsCorrect expectedModel actualModel
+
+[<Fact>]
+let ``calculate result takes multiple precedence into account with adjacent low level operators`` () =
+  let model = {input = "4"; calculation = ["1"; "+"; "2"; "+"; "3"; "*"]; lastActivity = DigitInput; calculationResult = None}
+
+  let actualModel = calculateResult model
+  let expectedModel = {input = "15"; calculation = []; lastActivity = Calculate; calculationResult = Some 15.0}
   assertModelIsCorrect expectedModel actualModel
 
 
