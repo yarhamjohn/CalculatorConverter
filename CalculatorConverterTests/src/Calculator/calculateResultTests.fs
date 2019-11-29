@@ -17,11 +17,19 @@ let ``calculate result updates calculation result given an empty calculation`` (
   assertModelIsCorrect expectedModel actualModel
 
 [<Fact>]
-let ``calculate result updates calculation result if last input was a decimal point`` () =
+let ``calculate result updates calculation result if last input was a decimal point given an empty calculation`` () =
   let model = {input = "1."; calculation = []; lastActivity = DecimalPointInput; calculationResult = None}
 
   let actualModel = calculateResult model
   let expectedModel = {input = "1"; calculation = []; lastActivity = Calculate; calculationResult = Some 1.0}
+  assertModelIsCorrect expectedModel actualModel
+
+[<Fact>]
+let ``calculate result updates calculation result if last input was a decimal point given a non-empty calculation`` () =
+  let model = {input = "1."; calculation = ["1"; "+"]; lastActivity = DecimalPointInput; calculationResult = None}
+
+  let actualModel = calculateResult model
+  let expectedModel = {input = "2"; calculation = []; lastActivity = Calculate; calculationResult = Some 2.0}
   assertModelIsCorrect expectedModel actualModel
 
 [<Fact>]

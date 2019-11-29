@@ -100,10 +100,36 @@ let performOperation (model: Model) (operation: Operation) =
 
 exception CalculationError of string
 
+let calculatePartial (calc: string list) =
+  // assumes a partial always consists of a single operator with left and right inputs
+  match getOperation calc.[1] with
+  | Add -> float calc.[0] + float calc.[2]
+  | Subtract -> float calc.[0] - float calc.[2]
+  | Multiply -> float calc.[0] * float calc.[2]
+  | Divide -> float calc.[0] / float calc.[2]
+  | _ -> 0.0
+
+let evaluatePartialCalculation (calculation: string list) =
+  let operations = List.filter (fun elem -> getOperation elem <> NoOperation) calculation
+
+  match operations.Length with
+  | 0 -> calculation
+  | 1 -> [string (calculatePartial calculation.[0..2])]
+  | _ ->
+    if getOperation operations.[0] = getPrecedentOperator (getOperation operations.[0]) (getOperation operations.[1])
+    then
+      let result = calculatePartial calculation.[0..2]
+      List.append [string result] calculation.[3..]
+    else
+      let result = calculatePartial calculation.[2..4]
+      List.append calculation.[0..1] [string result]
+
 //TODO evaluateCalculation - Takes no account of precedence and obvs no parentheses atm
 let evaluateCalculation (calculation: string list) =
   let numElements = List.length calculation
-  let mutable newCalculation = match getOperation calculation.[numElements - 1] with | NoOperation -> calculation | _ -> calculation.[..(numElements - 1)]
+  let mutable newCalculation = match getOperation calculation.[numElements - 1] with
+                               | NoOperation -> calculation
+                               | _ -> calculation.[..(numElements - 1)]
 
   if List.length newCalculation % 2 <> 1
   then raise(CalculationError("Unexpected number of elements in the calculation: " + (newCalculation |> List.fold (+) "")))
@@ -114,24 +140,30 @@ let evaluateCalculation (calculation: string list) =
     | _ ->
       let mutable numOperations = (numElements - 1) / 2
       while numOperations > 0 do
-        let calc = newCalculation.[0..2]
-        let result = match getOperation calc.[1] with
-                     | Add -> float calc.[0] + float calc.[2]
-                     | Subtract -> float calc.[0] - float calc.[2]
-                     | Multiply -> float calc.[0] * float calc.[2]
-                     | Divide -> float calc.[0] / float calc.[2]
-                     | _ -> 0.0
-
-        if List.length newCalculation = 3 then newCalculation <- [string result] else newCalculation <- List.append [string result] newCalculation.[3..]
+        newCalculation <- evaluatePartialCalculation newCalculation
         numOperations <- numOperations - 1
       float newCalculation.[0]
 
-
 let calculateResult (model: Model) =
   match model.lastActivity with
-  | DecimalPointInput -> {model with input = (deleteLastElement model).input; lastActivity = Calculate; calculationResult = Some (float (deleteLastElement model).input) }
-  | DigitInput ->  { model with input = string (evaluateCalculation (List.append model.calculation [model.input])); lastActivity = Calculate; calculation = []; calculationResult = Some (evaluateCalculation (List.append model.calculation [model.input]))}
-  | _ -> { model with input = string (evaluateCalculation (List.append model.calculation [model.input])); lastActivity = Calculate; calculation = []; calculationResult = Some (evaluateCalculation (List.append model.calculation [model.input]))}
+  | DecimalPointInput -> {
+    model with input = string (evaluateCalculation (List.append model.calculation [(deleteLastElement model).input]));
+               lastActivity = Calculate;
+               calculation = [];
+               calculationResult = Some (evaluateCalculation (List.append model.calculation [(deleteLastElement model).input]));
+    }
+  | DigitInput ->  {
+    model with input = string (evaluateCalculation (List.append model.calculation [model.input]));
+               lastActivity = Calculate;
+               calculation = [];
+               calculationResult = Some (evaluateCalculation (List.append model.calculation [model.input]))
+    }
+  | _ -> {
+    model with input = string (evaluateCalculation (List.append model.calculation [model.input]));
+               lastActivity = Calculate;
+               calculation = [];
+               calculationResult = Some (evaluateCalculation (List.append model.calculation [model.input]))
+  }
 
 //TODO parentheses...
 let update (msg:Msg) (model: Model) =
